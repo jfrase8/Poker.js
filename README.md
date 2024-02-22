@@ -1,6 +1,6 @@
 # POKER.JS
-This App was created for a semester long class by Steve and Joel, hense the name, Poker.js, 
-as the project is made using Javascript and its creators are Steve and Joel. 
+This App was created for a semester-long class by Joel and Steve, hense the name, Poker.js, 
+as the project is made using Javascript and its creators are Joel and Steve. 
 
 It is an online texas holdem poker game that you can play from different devices. Enjoy!
 
