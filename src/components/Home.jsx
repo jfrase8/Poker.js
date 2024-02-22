@@ -14,8 +14,8 @@ function Home(){
     return (
         <>
             <Title text="Poker.js"/>
-            <Subtitle text="Online Texas Holdem"/>
-            <RedirectButton id="play" to="/LobbyScreen" label="Play" />
+            <Subtitle text="Texas Holdem"/>
+            <RedirectButton id="play" to="/LobbyScreen" label="Start" />
         </>
     )
 }

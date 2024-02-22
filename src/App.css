@@ -7,7 +7,9 @@
 body{
     height: 100vh;
     width: 100%;
-    background-color: #002444;
+    background-image: url('/public/Cards/background3.jpg');
+    background-size: cover; 
+    background-repeat: no-repeat;
     display: grid;
     place-items: center;
 }
@@ -15,27 +17,28 @@ body{
 .title{
   position: relative;
   font-family: 'Mate SC', serif;
-  color: #B8CCDE;
+  color: #E76D83;
   font-size: 1500%;
 }
 .title::after{
   content: attr(data-text);
   position: absolute;
-  color: #B8CCDE;
+  color: #eba014;
   top: 0em;
   left: 0em;
   transition: 0.2s;
 }
 .title:hover::after{
-  top: -0.04em;
-  left: -0.04em;
-  color: #0C7CE1;
+  top: -0.03em;
+  left: -0.03em;
+  color: #eba014;
 }
 .subTitle {
-  position: relative;
+  transform: translateX(-50%);
+  transform: translatey(-30%);
   font-family: 'Mate SC', serif;
-  color: #739cbf;
-  font-size: 500%;
+  color: #E76D83;  /* e8eaed*/
+  font-size: 625%;
   text-align: center;
   user-select: none;
 }
@@ -52,28 +55,32 @@ body{
   }
 }
 #play {
+  transform: translateX(-50%);
+  transform: translatey(-60%);
+  font-family: 'Mate SC', serif;
   /* add the animation, but pause it by default */
   animation: spin 2.5s infinite linear paused;
   background:
     /* Background colors don’t work with `background-origin`, so use a gradient. */
     linear-gradient(
         to bottom,
-        black,
-        black
+        #735966,
+        #735966
       )
       padding-box, /* ends at inner border edges */
     conic-gradient( 
         from var(--bg-angle),
-        #B8CCDE, #0C7CE1, #B8CCDE
+        #E76D83, #eba014, #E76D83  /* lightest darkest middle */
       )
       border-box; /* extends to outer border edges */
   
   /* a clear border lets the background gradient shine through */
   border: 6px solid transparent;
-  width: 55vw;
+  width: 30vw;
   height: 10vh;
-  color: white;
-  font-size: 160%;
+  color: #F7DAD9;
+  font-size: 300%;
+  letter-spacing: 1px;
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -82,13 +89,15 @@ body{
   /* unpause the animation on hover */
   &:hover {
     animation-play-state: running;
-    color: #B8CCDE;
+    color: #F1BDBC;
   }
   &:active {
-    width: 54vw;
-    height: 9vh;
+    width: 31vw;
+    height: 10.5vh;
   }
 }
+
+
 #quit {
   background:
     /* Background colors don’t work with `background-origin`, so use a gradient. */
@@ -155,13 +164,49 @@ body{
 }
 
 .lobbyScreen {
-  width: 25vw;
-  height: 80vh;
+  width: 40vw;
+  height: 90vh;
+  padding: 4px;
   background-color: white;
+  display: flex;
+  flex-direction: column-reverse; 
+  align-items: center;
+  overflow-y: scroll;
 }
+
 .createLobby {
-  width: 20vw;
+  border-radius: 15px;
+  border: 3px solid #73AD21;
+  padding: 20px; 
+  width: 39vw;
   height: 20vh;
   color: black;
   font-size: 50px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.newlobbies {
+  border-radius: 15px;
+  border: 3px solid #73AD21;
+  padding: 10px;
+  width: 39vw;
+  height: 10vh;
+  color: black;
+  font-size: 50px;
+  display: flex;
+  align-items: center;
+  overflow-y: auto; 
+}
+
+.defaultWaitMessage {
+  color: white;
+  font-size: x-large;
+}
+
+.lobbyNameTitle {
+  margin-top: 0px;
+  color: white;
+  font-size: 10vh;
+  text-align: center;
 }

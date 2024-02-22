@@ -1,5 +1,4 @@
 import './App.css';
-import io from "socket.io-client";
 import React from 'react';
 import {
   BrowserRouter as Router,
@@ -10,8 +9,8 @@ import {
 import Home from "./components/Home";
 import Match from "./components/Match";
 import LobbyScreen from "./components/LobbyScreen";
-
-const socket = io.connect("http://localhost:3001");
+import WaitingScreen from "./components/WaitingScreen";
+import socket from "./socket";
 
 function App() {
   return (
@@ -21,6 +20,7 @@ function App() {
             <Route exact path="/" element={<Home />}/>
             <Route path="/Match" element={<Match />}/>
             <Route path="/LobbyScreen" element={<LobbyScreen />}/>
+            <Route path="/WaitingScreen/:lobbyName" element={<WaitingScreen />}/>
             <Route path="*" element={<Navigate to="/" />}/>
         </Routes>
       </Router>
