@@ -1,24 +1,12 @@
 const lobbyManager = require("./lobbyManager");
 
-const express = require("express");
-const app = express();
-const http = require("http");
-const { Server } = require("socket.io");
-const cors = require("cors");
-
-app.use(cors());
-
-const server = http.createServer(app);
-
-const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"],
-    }
-});
+const express  = require('express');
+const app      = express();
+const server   = require('http').createServer(app);
+const io       = require('socket.io')(server, { path: `/poker.js/server/socket.io` });
 
 io.on("connection", (socket) => {
-
+    console.log("client in");
     socket.on("createLobby", (lobbyName) => {
 
         if (lobbyManager.createLobby(lobbyName, socket.id))

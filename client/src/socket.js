@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:3001'); // Replace with your server URL
+const socket = io(process.env.URL, {path: '/poker.js/server/socket.io'});
 
 export default socket;

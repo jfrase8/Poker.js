@@ -15,7 +15,7 @@ import socket from "./socket";
 function App() {
   return (
     <>
-      <Router>
+      <Router basename='poker.js'>
         <Routes>
             <Route exact path="/" element={<Home />}/>
             <Route path="/Match" element={<Match />}/>
