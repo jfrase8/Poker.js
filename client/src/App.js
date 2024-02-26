@@ -10,7 +10,6 @@ import Home from "./components/Home";
 import Match from "./components/Match";
 import LobbyScreen from "./components/LobbyScreen";
 import WaitingScreen from "./components/WaitingScreen";
-import socket from "./socket";
 
 function App() {
   return (
