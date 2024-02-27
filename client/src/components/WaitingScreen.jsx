@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import socket from "../socket";
 import { useParams } from "react-router-dom";
+import LeaveLobbyButton from "./LeaveLobbyButton";
 
 const DefaultWait = (props) => {
     return (
@@ -41,6 +42,10 @@ const WaitingScreen = () => {
             setWaitingObject(<HostStart />);
         }, []);
 
+        socket.on('destroyLobby', () => {
+            console.log("lobbyDestroyed");
+        });
+
         // Cleanup the socket listener when the component is unmounted
         return () => {
             socket.off('startGameOption');
@@ -50,6 +55,7 @@ const WaitingScreen = () => {
         <>
             <div className="lobbyNameTitle">{lobbyName}</div>
             {waitingObject}
+            <LeaveLobbyButton/>
         </>
     );
 }

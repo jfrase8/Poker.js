@@ -24,6 +24,24 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on("leaveLobby", (lobbyName) => {
+        
+
+        let lobby = lobbyManager.getLobby(lobbyName);
+
+        let host = lobby.host;
+        if (socket.id == host){
+            io.to(socket.id).emit('destroyLobby');
+        }
+
+
+
+        if (lobby.clients.count == 0)
+        {
+            io.to(socket.id).emit('emptyLobby');
+        }
+    });
+
     socket.on("joinLobby", (lobbyName) => {
         if (lobbyManager.joinLobby(lobbyName, socket.id))
         {
@@ -33,7 +51,7 @@ io.on("connection", (socket) => {
             let lobby = lobbyManager.getLobby(lobbyName);
 
             // Check if lobby has enough people to start
-            if (lobby.clients.count = 2)
+            if (lobby.clients.count == 2)
             {
                 // Get the host of lobby
                 let host = lobby.host;
