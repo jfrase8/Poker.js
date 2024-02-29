@@ -2,6 +2,8 @@ import React, {useEffect, useState} from "react";
 import socket from "../socket";
 import { useParams } from "react-router-dom";
 import LeaveLobbyButton from "./LeaveLobbyButton";
+import { useNavigate } from "react-router-dom";
+import StartGameButton from "./StartGameButton";
 
 const DefaultWait = (props) => {
     return (
@@ -18,13 +20,6 @@ const WaitingForHost = (props) => {
         </>
     )
 }
-const HostStart = () => {
-    return (
-        <>
-            <button className="startGame">Start Game</button>
-        </>
-    )
-}
 
 const WaitingScreen = () => {
 
@@ -33,29 +28,36 @@ const WaitingScreen = () => {
     // Use state to manage waitingObject
     const [waitingObject, setWaitingObject] = useState(<DefaultWait totalJoined={1} />);
 
+    const navigate = useNavigate(); // Access the useNavigate hook directly
+
     useEffect(() => {
-        // Sends a signal to server to retrieve lobby info
-        socket.emit('getStartupInfo');
         // Creates a start button for the host of this lobby that can start the game
         socket.on('startGameOption', () => {
             console.log("You are host");
-            setWaitingObject(<HostStart />);
-        }, []);
+            setWaitingObject(<StartGameButton name={lobbyName}/>);
+        });
 
-        socket.on('destroyLobby', () => {
-            console.log("lobbyDestroyed");
+        socket.on('clientLeaveLobby', (lobby) => {
+            console.log(lobby);
+            navigate("/LobbyScreen");
+        });
+
+        socket.on('gameStarted', (lobbyName) => {
+            navigate("/Match");
         });
 
         // Cleanup the socket listener when the component is unmounted
         return () => {
             socket.off('startGameOption');
+            socket.off('destroyLobby');
+            socket.off('gameStarted');
         };
-    }); // Include navigate in the dependency array
+    }, [navigate]); // Include navigate in the dependency array
     return (
         <>
             <div className="lobbyNameTitle">{lobbyName}</div>
             {waitingObject}
-            <LeaveLobbyButton/>
+            <LeaveLobbyButton name={lobbyName}/>
         </>
     );
 }

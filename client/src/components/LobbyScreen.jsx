@@ -6,10 +6,10 @@ const LobbyScreen = () => {
     const [lobbies, setLobbies] = useState([]);
     const [inputValue, setInputValue] = useState('');
 
-
     const navigate = useNavigate(); // Access the useNavigate hook directly
 
     useEffect(() => {
+
         // Checks for if a new lobby has been created
         socket.on('lobbyCreated', (lobbyName) => {
             const newLobbyList = [...lobbies, { name: lobbyName }];
@@ -34,6 +34,7 @@ const LobbyScreen = () => {
         socket.emit('getLobbies');
         // then refresh lobby list
         socket.on('refreshLobbies', (serverLobbies) => {
+            console.log(serverLobbies);
             // Create a new array based on the existing state
             const newLobbyList = [...lobbies];
 
@@ -56,13 +57,14 @@ const LobbyScreen = () => {
             socket.off('lobbyJoinFailed');
             socket.off('refreshLobbies');
         };
-    }, [navigate, lobbies]); // Include navigate in the dependency array
+    }, [navigate]); // Include navigate in the dependency array
 
 
     // createLobby emits an event to server called 'createLobby'
     const createLobby = (lobbyName) => {
-        console.log(lobbyName);
-        socket.emit('createLobby', lobbyName);
+        // Make sure lobby name is not an empty string
+        if (lobbyName != "")
+            socket.emit('createLobby', lobbyName);
     };
 
     const joinLobby = (lobbyName) => {

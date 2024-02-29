@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import socket from '../socket';
-import { useNavigate } from 'react-router-dom';
-import { useParams } from "react-router-dom";
 
-const LeaveLobbyButton = () => {
+const LeaveLobbyButton = (props) => {
 
-    const { lobbyName } = useParams();
-
-    const leaveLobby = (lobbyName) => {
-        socket.emit('leaveLobby', lobbyName);
+    const leaveLobby = () => {
+        socket.emit('serverLeaveLobby', props.name);
     };
 
     return(
-        <button className='leaveLobby' onClick={() => leaveLobby(lobbyName)}>Exit Lobby</button>
+        <button className='leaveLobby' onClick={leaveLobby}>Exit Lobby</button>
     )
 
 };
