@@ -16,8 +16,13 @@ class Hand extends React.Component {
         return(
             <>
                 <div className='handArea'>
-                    {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
-                    <div className='chipAmount'>{this.props.chipAmount}</div>
+                    <div className='leftOfCards'>
+                        <div className='yourName'>{this.props.yourName}</div>
+                        <div className='chipAmount'>{"Chips: " + this.props.chipAmount}</div>
+                    </div>
+                    <div className='cardArea'>
+                        {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
+                    </div>
                 </div>
             </>
         )

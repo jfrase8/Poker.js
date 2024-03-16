@@ -124,8 +124,8 @@ class GameScreen extends React.Component {
         }
         return (
             <>
-                <div className="deck">Deck</div>
-                <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount}/>
+                <div className="deck"></div>
+                <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} yourName={this.state.yourName}/>
                 <TurnChoices choices={turnChoices}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}

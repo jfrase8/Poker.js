@@ -96,8 +96,6 @@ body{
     height: 10.5vh;
   }
 }
-
-
 #quit {
   background:
     /* Background colors don’t work with `background-origin`, so use a gradient. */
@@ -128,39 +126,58 @@ body{
 
 .deck {
   position: fixed;
-  top: 50%;
-  left: 2%;
+  top: 20%;
+  left: 30%;
   transform: translateY(-50%);
-  width: 10vw;
-  height: 30vh;
-  background-color: white;
-  border: 10px solid black;
-  color: black;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: url("../public/Cards/deck_back.png");
+  width: 14vw; 
+  height: 26vh;
   text-align: center;
   display: flex;
 }
 
 .handArea {
   position: fixed;
-  bottom: 2%; /* this is how close you want it to the bottom of the screen */
+  bottom: 1%; /* this is how close you want it to the bottom of the screen */
   left: 50%;
   transform: translateX(-50%);
-  width: 25vw;
-  height: 40vh;
+  width: 40%;
+  height: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  gap: 3%;
+  border: 3px solid black;
+}
+.cardArea {
   display: flex;
   align-items: center;
   justify-content: center; /* Center items horizontally */
-  min-height: 200px;
   box-sizing: border-box;
-  gap: 10px;
+  border: 3px solid black;
+  width: 50%;
+  height: 90%;
+}
+.leftOfCards {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center items horizontally */
+  flex-flow: column nowrap;
+  box-sizing: border-box;
+  border: 3px solid black;
+  width: 20%;
+  height: 90%;
 }
 
 /* this deals with card image size */
 .card {
   background-size: contain;
   background-repeat: no-repeat;
-  width: 20vw; 
-  height: 32vh;
+  height: 25vh;
+  flex-grow: 1;
 }
 
 .lobbyScreen {
@@ -216,21 +233,18 @@ body{
 /*opponents setup*/
 .opponent {
   position: absolute;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  text-align: center;
-  line-height: 30px;
-  font-size: 14px;
-  color: #fff;
+  width: 15%;
+  height: 35%;
+  border: 3px solid black;
 }
 
-.opponent1 { transform: translate(-2000%, 700%); }
-.opponent2 { transform: translate(-2000%, -500%); }
-.opponent3 { transform: translate(2000%, -500%); }
-.opponent4 { transform: translate(2000%, 700%); }
+.opponent1 { transform: translate(-300%, 10%); }
+.opponent2 { transform: translate(-300%, -100%); }
+.opponent3 { transform: translate(200%, -100%); }
+.opponent4 { transform: translate(200%, 10%); }
 
 .opponentsTurn { background-color: lightgreen; }
 .notOpponentsTurn { background-color: red; }
 
-.chipAmount { color: white; }
+.chipAmount { color: white; text-align: center; }
+.yourName { color: lightblue; text-align: center; }

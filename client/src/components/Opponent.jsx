@@ -10,11 +10,8 @@ const Opponent = (props) => {
     return(
         <>
             <div className={`opponent opponent${props.cssOrderNum} ${chooseColor}`}>
-                {props.name}
-                {props.cssOrderNum}
-                <div className='chipAmount'>
-                    {"Chips:" + props.chipAmount}
-                </div>
+                <div className='yourName'>{props.name}</div>
+                <div className='chipAmount'>{"Chips:" + props.chipAmount}</div>
             </div>
         </>
     );
