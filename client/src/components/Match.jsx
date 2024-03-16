@@ -1,11 +1,11 @@
 import React from "react";
-import Deck from "./Deck";
+import GameScreen from "./GameScreen";
 
 function Match(){
 
     return (
         <>
-            <Deck />
+            <GameScreen />
         </>
     );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import Card from './Card';
+import TurnChoices from './TurnChoices';
 
 class Hand extends React.Component {
     // Default properties for a poker hand
@@ -16,6 +17,7 @@ class Hand extends React.Component {
             <>
                 <div className='handArea'>
                     {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
+                    <div className='chipAmount'>{this.props.chipAmount}</div>
                 </div>
             </>
         )

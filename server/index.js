@@ -14,6 +14,9 @@ io.on("connection", (socket) => {
             // After creating a lobby, redirect client to lobby screen
             io.to(socket.id).emit('lobbyCreated', lobbyName);
 
+            // Update the player count of the lobby
+            io.to(socket.id).emit('updatePlayerCount', (1));
+
             // Refresh the list of lobbies for all clients connected to server
             const lobbies = lobbyManager.getAllLobbyNames();
             io.emit('displayLobbies', lobbies);
@@ -28,6 +31,7 @@ io.on("connection", (socket) => {
         
         // Get the lobby that client is leaving
         let lobby = lobbyManager.getLobby(lobbyName);
+        console.log(lobby);
 
         // Get the host of the lobby
         let host = lobby.host;
@@ -36,15 +40,17 @@ io.on("connection", (socket) => {
         if (socket.id == host){
             for (const client of [...lobby.clients])
             {
-                console.log(lobby.clients);
-                console.log(client + " left");
                 lobbyManager.leaveLobby(lobbyName, client);
-                io.to(client).emit('clientLeaveLobby', (lobbyManager.getLobby(lobbyName)));
+                io.to(client.id).emit('clientLeaveLobby', lobbyManager.getLobby(lobbyName));
             }
         }
         else {
-            lobbyManager.leaveLobby(lobbyName, socket.id);
-            io.to(socket.id).emit('clientLeaveLobby', (lobbyManager.getLobby(lobbyName)));
+            lobbyManager.leaveLobby(lobbyName, lobby.findClient(socket.id));
+            io.to(socket.id).emit('clientLeaveLobby', lobby);
+
+            // Have the clients still in the lobby update the amount of people in the lobby
+            for (client of lobby.clients)
+                io.to(client.id).emit('updatePlayerCount', lobby.clients.length);
         }
     });
 
@@ -65,17 +71,23 @@ io.on("connection", (socket) => {
                 for (client of lobby.clients)
                 {
                     // If client is host, create start button
-                    if (client === host)
+                    if (client.id === host)
                     {
                         io.to(host).emit('startGameOption');
                     }    
                     else
-                        io.to(client).emit('waitingForHostStart');
+                    {
+                        io.to(client.id).emit('waitingForHostStart');
+                        console.log(client.nickname + "joined");
+                    }
+                
+                    // Have the clients still in the lobby update the amount of people in the lobby
+                    io.to(client.id).emit('updatePlayerCount', (lobby.clients.length));
                 }
             }
         }
         else{
-            io.to(socket.id).emit('lobbyJoinFailed', (lobbyName, joinLobby["reason"]));
+            io.to(socket.id).emit('lobbyJoinFailed', lobbyName, joinLobby["reason"]);
         }
     })
 
@@ -86,15 +98,48 @@ io.on("connection", (socket) => {
     socket.on('startGame', (lobbyName) => {
 
         let lobby = lobbyManager.getLobby(lobbyName);
-        console.log(lobby);
 
+        // Set lobby to locked
+        lobby.locked = true;
+
+        // Deal Hands
+        lobby.deck.dealHands(lobby.clients);
+
+        // Turn order
+        let turnNumber = 1;
 
         // Send an event to all clients to be redirected to match screen
-        for (client of lobby.clients)
+        for (let client of lobby.clients)
         {
-            io.to(client).emit('gameStarted', (lobbyName));
+            io.to(client.id).emit('gameStarted');
+
+
+            // Get this clients hand
+            let clientHand = lobby.deck.getPlayerHand(client);
+
+            // Update turn number for client
+            client.turnNumber = turnNumber;
+
+            // Send the starting hand, turn number, and name to client
+            io.to(client.id).emit('playerInfo', clientHand, client);
+
+            // This player goes first xxxxxxxxxxxxxxxxxxxxxx - This needs to be fixed
+            if (turnNumber == 1)
+                client.isYourTurn = true;
+
+            // Increase turn number
+            turnNumber++;
         }
-        
+
+        // Loop again, and this time, send the opponent info to each player
+        for (let client of lobby.clients) {
+            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+            io.to(client.id).emit('opponentsInfo', opponents);
+        }
+    });
+
+    socket.on('turnChoice', (choice) => {
+        console.log(choice + " Chosen");
     });
 });
 

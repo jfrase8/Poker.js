@@ -27,7 +27,7 @@ const LobbyScreen = () => {
         });
         //Checks for lobby join failure
         socket.on('lobbyJoinFailed', (lobbyName, reason) => {
-            console.log("Failed to join: " + lobbyName + " Reason: " + reason);
+            alert("Failed to join: " + lobbyName + " Reason: " + reason);
         });
 
         // On Startup, get the lobbies currently on the server
@@ -59,7 +59,6 @@ const LobbyScreen = () => {
         };
     }, [navigate]); // Include navigate in the dependency array
 
-
     // createLobby emits an event to server called 'createLobby'
     const createLobby = (lobbyName) => {
         // Make sure lobby name is not an empty string
@@ -68,7 +67,6 @@ const LobbyScreen = () => {
     };
 
     const joinLobby = (lobbyName) => {
-        console.log("Joining");
         socket.emit('joinLobby', lobbyName);
     };
 

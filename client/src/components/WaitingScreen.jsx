@@ -8,7 +8,7 @@ import StartGameButton from "./StartGameButton";
 const DefaultWait = (props) => {
     return (
         <>
-            <div className="defaultWaitMessage">Waiting for 1 more player - Total Players: {props.totalJoined}/6</div>
+            <div className="defaultWaitMessage">Waiting for 1 more player</div>
         </>
     )
 };
@@ -16,10 +16,42 @@ const DefaultWait = (props) => {
 const WaitingForHost = (props) => {
     return (
         <>
-            <div className="defaultWaitMessage">Waiting for host to start - Total Players: {props.totalJoined}/6</div>
+            <div className="defaultWaitMessage">Waiting for host to start</div>
         </>
     )
 }
+
+const TotalPlayers = () => {
+    const [playerCount, setPlayerCount] = useState(() => {
+        // Retrieve the player count from session storage or default to 1
+        const storedCount = sessionStorage.getItem('playerCount');
+        return storedCount ? parseInt(storedCount, 10) : 1;
+    });
+
+    //const navigate = useNavigate();
+
+    useEffect(() => {
+        socket.on("updatePlayerCount", (clients) => {
+            setPlayerCount(clients);
+        });
+
+        // Update session storage whenever the player count changes
+        sessionStorage.setItem('playerCount', playerCount.toString());
+
+        return(() => {
+            socket.off('updatePlayerCount');
+        });
+
+    }, [playerCount]);
+
+    return (
+        <>
+            <div className="totalPlayers">Total Players: {playerCount}/6</div>
+        </>
+    )
+}
+
+
 
 const WaitingScreen = () => {
 
@@ -33,30 +65,31 @@ const WaitingScreen = () => {
     useEffect(() => {
         // Creates a start button for the host of this lobby that can start the game
         socket.on('startGameOption', () => {
-            console.log("You are host");
             setWaitingObject(<StartGameButton name={lobbyName}/>);
         });
 
         socket.on('clientLeaveLobby', (lobby) => {
             console.log(lobby);
-            navigate("/LobbyScreen");
+            setTimeout(() => navigate('/LobbyScreen'), 0);
+            
         });
 
-        socket.on('gameStarted', (lobbyName) => {
+        socket.on('gameStarted', () => {
             navigate("/Match");
         });
 
         // Cleanup the socket listener when the component is unmounted
         return () => {
             socket.off('startGameOption');
-            socket.off('destroyLobby');
             socket.off('gameStarted');
+            socket.off('clientLeaveLobby');
         };
-    }, [navigate]); // Include navigate in the dependency array
+    }, [navigate, lobbyName]); // Include navigate in the dependency array
     return (
         <>
             <div className="lobbyNameTitle">{lobbyName}</div>
             {waitingObject}
+            {<TotalPlayers />}
             <LeaveLobbyButton name={lobbyName}/>
         </>
     );

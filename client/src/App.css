@@ -212,3 +212,25 @@ body{
   font-size: 10vh;
   text-align: center;
 }
+
+/*opponents setup*/
+.opponent {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 30px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.opponent1 { transform: translate(-2000%, 700%); }
+.opponent2 { transform: translate(-2000%, -500%); }
+.opponent3 { transform: translate(2000%, -500%); }
+.opponent4 { transform: translate(2000%, 700%); }
+
+.opponentsTurn { background-color: lightgreen; }
+.notOpponentsTurn { background-color: red; }
+
+.chipAmount { color: white; }
