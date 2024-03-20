@@ -3,6 +3,7 @@ import socket from '../socket';
 
 const Opponent = (props) => {
     console.log(props.cssOrderNum);
+    console.log(props.turnNumber);
     let chooseColor = "notOpponentsTurn";
     if (props.isYourTurn)
         chooseColor = "opponentsTurn";

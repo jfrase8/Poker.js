@@ -120,21 +120,45 @@ io.on("connection", (socket) => {
             // Update turn number for client
             client.turnNumber = turnNumber;
 
+            // Find opponents
+            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+
+            // TFigure out if this client goes first
+            if (lobby.clients.length == 3)
+            {
+                if (client.turnNumber == 1)
+                {
+                    console.log("3 players");
+                    client.isYourTurn = true;
+                }  
+            }
+            else if (lobby.clients.length > 3)
+            {
+                if (client.turnNumber == 4)
+                {
+                    console.log("More than 3 players");
+                    client.isYourTurn = true;
+                } 
+            }     
+            else
+            {
+                if (client.turnNumber == 1)
+                {
+                    console.log("Two players");
+                    client.isYourTurn = true;
+                }
+            }
+
             // Send the starting hand, turn number, and name to client
-            io.to(client.id).emit('playerInfo', clientHand, client);
-
-            // This player goes first xxxxxxxxxxxxxxxxxxxxxx - This needs to be fixed
-            if (turnNumber == 1)
-                client.isYourTurn = true;
-
+            io.to(client.id).emit('playerInfo', clientHand, client, opponents);
+                    
             // Increase turn number
             turnNumber++;
         }
 
-        // Loop again, and this time, send the opponent info to each player
+        // Loop again, and this time, send the opponent info to each player, and start turn from first player
         for (let client of lobby.clients) {
-            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-            io.to(client.id).emit('opponentsInfo', opponents);
+            
         }
     });
 
