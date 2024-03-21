@@ -113,17 +113,10 @@ io.on("connection", (socket) => {
         {
             io.to(client.id).emit('gameStarted');
 
-
-            // Get this clients hand
-            let clientHand = lobby.deck.getPlayerHand(client);
-
             // Update turn number for client
             client.turnNumber = turnNumber;
 
-            // Find opponents
-            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-
-            // TFigure out if this client goes first
+            // Figure out if this client goes first
             if (lobby.clients.length == 3)
             {
                 if (client.turnNumber == 1)
@@ -147,18 +140,21 @@ io.on("connection", (socket) => {
                     console.log("Two players");
                     client.isYourTurn = true;
                 }
-            }
-
-            // Send the starting hand, turn number, and name to client
-            io.to(client.id).emit('playerInfo', clientHand, client, opponents);
-                    
+            }       
             // Increase turn number
             turnNumber++;
         }
 
-        // Loop again, and this time, send the opponent info to each player, and start turn from first player
         for (let client of lobby.clients) {
-            
+
+            // Get this clients hand
+            let clientHand = lobby.deck.getPlayerHand(client);
+
+            // Find opponents
+            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+
+            // Send all info of players to this client
+            io.to(client.id).emit('playerInfo', clientHand, client, opponents);
         }
     });
 
