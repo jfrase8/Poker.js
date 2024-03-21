@@ -23,6 +23,9 @@ class Hand extends React.Component {
                     <div className='cardArea'>
                         {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
                     </div>
+                    <div className='rightOfCards'>
+                        <TurnChoices choices={this.props.choices}/>
+                    </div>
                 </div>
             </>
         )

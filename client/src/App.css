@@ -175,8 +175,26 @@ body{
 /* this deals with card image size */
 .card {
   background-size: contain;
+  background-position: center;
   background-repeat: no-repeat;
   height: 25vh;
+  flex-grow: 1;
+}
+
+.rightOfCards {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center items horizontally */
+  flex-flow: column nowrap;
+  box-sizing: border-box;
+  border: 3px solid black;
+  width: 20%;
+  height: 90%;
+}
+
+.choice {
+  width: 100%;
+  font-size: 100%;
   flex-grow: 1;
 }
 
@@ -233,18 +251,53 @@ body{
 /*opponents setup*/
 .opponent {
   position: absolute;
-  width: 15%;
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+  box-sizing: border-box;
+  width: 20%;
   height: 35%;
   border: 3px solid black;
 }
+.opponentInfo {
+  position: absolute;
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+  box-sizing: border-box;
+  flex-flow: column nowrap;
+  width: 60%;
+  height: 100%;
+  border: 3px solid black;
+  gap: 5%;
+}
+.opponentCardArea {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center items horizontally */
+  box-sizing: border-box;
+  height: 100%; /* Ensure the height takes full space */
+}
+.opponentCard {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100%;
+  background-image: url("../public/Cards/deck_back.png");
+  flex-grow: 1;
+}
+.betArea {
+  box-sizing: border-box;
+  border: 3px solid black;
+  width: 20%;
+  height: 100%;
+}
 
-.opponent1 { transform: translate(-300%, 10%); }
-.opponent2 { transform: translate(-300%, -100%); }
-.opponent3 { transform: translate(200%, -100%); }
-.opponent4 { transform: translate(200%, 10%); }
+.opponent1 { transform: translate(-230%, 10%); }
+.opponent2 { transform: translate(-230%, -100%); }
+.opponent3 { transform: translate(130%, -100%); }
+.opponent4 { transform: translate(130%, 10%); }
 
 .opponentsTurn { background-color: lightgreen; }
 .notOpponentsTurn { background-color: red; }
 
-.chipAmount { color: white; text-align: center; }
+.chipAmount { color: white; text-align: center;}
 .yourName { color: black; text-align: center; }

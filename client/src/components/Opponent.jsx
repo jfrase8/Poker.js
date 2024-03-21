@@ -8,11 +8,19 @@ const Opponent = (props) => {
     if (props.isYourTurn)
         chooseColor = "opponentsTurn";
 
+    // <div className='betArea'>BetArea</div>
     return(
         <>
             <div className={`opponent opponent${props.cssOrderNum} ${chooseColor}`}>
-                <div className='yourName'>{props.name}</div>
-                <div className='chipAmount'>{"Chips:" + props.chipAmount}</div>
+                <div className='opponentInfo'>
+                    <div className='yourName'>{props.name}</div>
+                    <div className='chipAmount'>{"Chips:" + props.chipAmount}</div>
+                    <div className='opponentCardArea'>
+                        <div className='opponentCard'></div>
+                        <div className='opponentCard'></div>
+                    </div>
+                </div>
+                
             </div>
         </>
     );
