@@ -20,8 +20,8 @@ class GameScreen extends React.Component {
             turnCard: null,
             riverCard: null,
             numOfBets: 0,
-            role: null,
-            turnChoices: null,
+            role: "",
+            turnChoices: [],
         }
     }
     componentDidMount() {
@@ -182,7 +182,7 @@ class GameScreen extends React.Component {
             <>
                 <div className="deck"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} yourName={this.state.yourName}/>
-                
+                <TurnChoices choices={this.state.turnChoices}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 

@@ -247,4 +247,4 @@ body{
 .notOpponentsTurn { background-color: red; }
 
 .chipAmount { color: white; text-align: center; }
-.yourName { color: lightblue; text-align: center; }
+.yourName { color: black; text-align: center; }
