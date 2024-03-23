@@ -2,13 +2,11 @@ import React, { useEffect, useState } from 'react';
 import socket from '../socket';
 
 const Opponent = (props) => {
-    console.log(props.cssOrderNum);
-    console.log(props.turnNumber);
     let chooseColor = "notOpponentsTurn";
     if (props.isYourTurn)
         chooseColor = "opponentsTurn";
 
-    // <div className='betArea'>BetArea</div>
+    // 
     return(
         <>
             <div className={`opponent opponent${props.cssOrderNum} ${chooseColor}`}>
@@ -20,7 +18,7 @@ const Opponent = (props) => {
                         <div className='opponentCard'></div>
                     </div>
                 </div>
-                
+                <div className='betArea'>BetArea</div>
             </div>
         </>
     );

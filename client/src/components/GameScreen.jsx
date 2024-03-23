@@ -3,6 +3,7 @@ import Hand from "./Hand.jsx";
 import socket from "../socket.js";
 import Opponent from "./Opponent.jsx";
 import TurnChoices from "./TurnChoices.jsx";
+import { io } from "socket.io-client";
 
 class GameScreen extends React.Component {
     constructor(props)
@@ -28,22 +29,55 @@ class GameScreen extends React.Component {
         socket.on('playerInfo', (hand, yourInfo, opponents) => {
             this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
                            chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn}, () => {
-                            // Set your roll
+                            // Set your roll for a 3+ player game
                             if (opponents.length > 1)
                             {
+                                // Host is dealer
                                 if (this.state.yourTurnNumber == 1)
                                     this.setState({role: "Dealer"}, () => {this.checkYourTurn()});
-                                else if (this.state.yourTurnNumber == 2) 
-                                    this.setState({role: "Small Blind"}, () => {this.checkYourTurn()});
-                                else if (this.state.yourTurnNumber == 3) 
-                                    this.setState({role: "Big Blind"}, () => {this.checkYourTurn()});
+                                // Small Blind
+                                else if (this.state.yourTurnNumber == 2)
+                                {
+                                    this.setState({role: "Small Blind", currentBet:10}, () => 
+                                    {
+                                        this.checkYourTurn();
+                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                    });
+                                }
+                                // Big Blind
+                                else if (this.state.yourTurnNumber == 3)
+                                {
+                                    this.setState({role: "Big Blind", currentBet: 20}, () => 
+                                    {
+                                        this.checkYourTurn();
+                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                    });
+                                }
+                                // No role
                                 else
                                     this.checkYourTurn();
                             }
+                            // Set your role for a 2 player game
                             else
                             {
-                                if (this.state.yourTurnNumber == 1) this.setState({role: "Small Blind Dealer"}, () => {this.checkYourTurn()});
-                                else this.setState({role: "Big Blind"}, () => {this.checkYourTurn()});
+                                // Small Blind and Dealer
+                                if (this.state.yourTurnNumber == 1)
+                                {
+                                    this.setState({role: "Small Blind Dealer", currentBet: 10}, () => 
+                                    {
+                                        this.checkYourTurn();
+                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                    });
+                                }
+                                // Big Blind
+                                else  
+                                {
+                                    this.setState({role: "Big Blind", currentBet: 20}, () =>
+                                    {
+                                        this.checkYourTurn()
+                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                    });
+                                }
                             }
 
                             // Set opponents
@@ -178,6 +212,7 @@ class GameScreen extends React.Component {
 
     render() {
         console.log(this.state.turnChoices);
+        console.log(this.state.role);
         return (
             <>
                 <div className="deck"></div>
@@ -188,6 +223,7 @@ class GameScreen extends React.Component {
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
                               currentBet={opponent.currentBet}/>
                 ))}
+
             </>
         )
     }

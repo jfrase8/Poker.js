@@ -159,7 +159,15 @@ io.on("connection", (socket) => {
     });
 
     socket.on('turnChoice', (choice) => {
-        console.log(choice + " Chosen");
+
+        if (choice == 'check')
+        {
+            // Switch turn to next player
+            
+        }
+    });
+    socket.on('updateCurrentButt', (currentBet) => {
+        socket
     });
 });
 
