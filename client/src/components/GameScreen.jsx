@@ -2,8 +2,6 @@ import React from "react";
 import Hand from "./Hand.jsx";
 import socket from "../socket.js";
 import Opponent from "./Opponent.jsx";
-import TurnChoices from "./TurnChoices.jsx";
-import { io } from "socket.io-client";
 
 class GameScreen extends React.Component {
     constructor(props)
@@ -23,12 +21,13 @@ class GameScreen extends React.Component {
             numOfBets: 0,
             role: "",
             turnChoices: [],
+            lobby: null,
         }
     }
     componentDidMount() {
-        socket.on('playerInfo', (hand, yourInfo, opponents) => {
+        socket.on('playerInfo', (hand, yourInfo, opponents, lobbyObj) => {
             this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
-                           chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn}, () => {
+                           chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobby: lobbyObj}, () => {
                             // Set your roll for a 3+ player game
                             if (opponents.length > 1)
                             {
@@ -41,7 +40,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Small Blind", currentBet:10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
                                     });
                                 }
                                 // Big Blind
@@ -50,7 +49,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Big Blind", currentBet: 20}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
                                     });
                                 }
                                 // No role
@@ -66,7 +65,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Small Blind Dealer", currentBet: 10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
                                     });
                                 }
                                 // Big Blind
@@ -75,7 +74,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Big Blind", currentBet: 20}, () =>
                                     {
                                         this.checkYourTurn()
-                                        socket.emit('updateCurrentBet', this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
                                     });
                                 }
                             }

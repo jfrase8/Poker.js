@@ -50,9 +50,10 @@ class DeckManager {
                          new Card("spades", "5"),
                          new Card("spades", "4"),
                          new Card("spades", "3"),
-                         new Card("spades", "2"),], dealtHands = []){
+                         new Card("spades", "2"),], dealtHands = [], pot = 0){
         this.cards = cards;
         this.dealtHands = dealtHands;
+        this.pot = pot;
     }
     shuffleDeck(deck) {
         for (let i = deck.length - 1; i > 0; i--) {
