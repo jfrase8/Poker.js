@@ -158,7 +158,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on('turnChoice', (lobby, choice) => {
+    socket.on('turnChoice', (lobby, choice, betAmount) => {
 
         let player = lobby.findClient(socket.id);
         let handSize = lobby.deck.dealtHands[0].length;
@@ -168,8 +168,11 @@ io.on("connection", (socket) => {
             player.status = 'folded';
         }
         else {
-            player.status = 'continue'
+            player.status = 'done'
         }
+
+        if (choice == 'bet')
+            player.currentBet = betAmount;
 
         if (choice == 'raise')
         {
@@ -179,6 +182,8 @@ io.on("connection", (socket) => {
                 if (client.id != player.id)
                     client.status = 'ready';
             }
+
+            player.currentBet = betAmount;
         }
 
         if (choice == 'call')
@@ -198,7 +203,7 @@ io.on("connection", (socket) => {
         let count = 0;
         for (let client of lobby.clients)
         {
-            if (client.continue)
+            if (client.status == 'done')
                 count++;
         }
 
@@ -214,7 +219,20 @@ io.on("connection", (socket) => {
             {
                 // Deal the next round of cards
                 if (handSize == 2)
+                {
+                    let newPlayer = player.turnNumber - 2;
+                    if (newPlayer < 1)
+                        newPlayer += 5;
+
+                    for (let client of lobby.clients)
+                    {
+                        if (newPlayer == client.turnNumber)
+                            client.isYourTurn = true;
+                    }
+
                     lobby.deck.dealFlop();
+                }
+                    
                 else if (handSize > 2)
                     lobby.deck.dealTurnRiver();
                 
@@ -233,23 +251,27 @@ io.on("connection", (socket) => {
                 }
             }
         }
-
-        if (choice == 'check')
+        else 
         {
-            // Switch turn to next player, or move onto next phase if all other plays are finished
-            
-
-            // Check if all players have finished this round
-            if (count == lobby.clients.length)
+            if (choice == 'check')
             {
-                
-            }
-            else {
 
+                // Check if all players have finished this round
+                if (count == lobby.clients.length)
+                {
+                    
+                }
+                else {
+
+                }
             }
         }
+
+        // Switch turn to next player, or move onto next phase if all other plays are finished
+        player.isYourTurn = false;
+
     });
-    socket.on('updateCurrentButt', (lobby, currentBet) => {
+    socket.on('updateCurrentBet', (lobby, currentBet) => {
 
         console.log(lobby);
 
