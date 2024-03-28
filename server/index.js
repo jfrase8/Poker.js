@@ -247,7 +247,6 @@ io.on("connection", (socket) => {
                 for (let client of lobby.clients)
                 {
                     // Put their chips in the main pot
-                    client.chipAmount -= client.currentBet;
                     lobby.pot += client.currentBet;
                     client.currentBet = 0;
 
@@ -290,12 +289,12 @@ io.on("connection", (socket) => {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
                 // Send next turn info to clients
-                io.to(client.id).emit('nextTurn', client, opponents);
+                io.to(client.id).emit('nextTurn', client, opponents, choice);
             }
 
         }
     });
-    socket.on('updateCurrentBet', (lobbyName, currentBet) => {
+    socket.on('updateCurrentBet', (lobbyName, currentBet, action) => {
 
         console.log(lobbyName);
 
@@ -309,6 +308,10 @@ io.on("connection", (socket) => {
 
         // Update their currentBet amount
         client.currentBet = currentBet;
+        client.chipAmount -= client.currentBet;
+
+        // Update their chosen action
+        client.actionChose = action;
 
         // Other clients
         let otherClients = lobby.clients.filter(client => client.id !== socket.id);

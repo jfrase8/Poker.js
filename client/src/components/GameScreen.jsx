@@ -14,7 +14,7 @@ class GameScreen extends React.Component {
             opponents: [],
             isYourTurn: false,
             chipAmount: 0,
-            currentBet: 0,
+            currentBet: "",
             flop: null,
             turnCard: null,
             riverCard: null,
@@ -22,6 +22,7 @@ class GameScreen extends React.Component {
             role: "",
             turnChoices: [],
             lobbyName: "",
+            actionChose: "",
         }
     }
     componentDidMount() {
@@ -37,19 +38,19 @@ class GameScreen extends React.Component {
                                 // Small Blind
                                 else if (this.state.yourTurnNumber == 2)
                                 {
-                                    this.setState({role: "Small Blind", currentBet:10}, () => 
+                                    this.setState({role: "Small Blind", currentBet:10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
                                     });
                                 }
                                 // Big Blind
                                 else if (this.state.yourTurnNumber == 3)
                                 {
-                                    this.setState({role: "Big Blind", currentBet: 20}, () => 
+                                    this.setState({role: "Big Blind", currentBet: 20, actionChose:"Big Blind", chipAmount: 1000-20}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
                                     });
                                 }
                                 // No role
@@ -62,19 +63,19 @@ class GameScreen extends React.Component {
                                 // Small Blind and Dealer
                                 if (this.state.yourTurnNumber == 1)
                                 {
-                                    this.setState({role: "Small Blind Dealer", currentBet: 10}, () => 
+                                    this.setState({role: "Small Blind Dealer", currentBet: 10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
                                     });
                                 }
                                 // Big Blind
                                 else  
                                 {
-                                    this.setState({role: "Big Blind", currentBet: 20}, () =>
+                                    this.setState({role: "Big Blind", currentBet: 20, actionChose:"Big Blind", chipAmount: 1000-20}, () =>
                                     {
                                         this.checkYourTurn()
-                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
                                     });
                                 }
                             }
@@ -83,16 +84,20 @@ class GameScreen extends React.Component {
                             this.setState({opponents: opponents});
                         });
         });
-        socket.on('nextTurn', (you, opponents) => {
-            this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents}, () => {
+        socket.on('nextTurn', (you, opponents, choice) => {
+            this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice}, () => {
                 this.checkYourTurn();
             });
+        });
+        socket.on('updateBet', (opponents) => {
+            this.setState({opponents: opponents});
         });
     }
     componentWillUnmount() {
         // Remove event listeners when the component unmounts
         socket.off('playerInfo');
         socket.off('nextTurn');
+        socket.off('updateBet')
     }
 
     checkYourTurn() {
@@ -222,11 +227,12 @@ class GameScreen extends React.Component {
             <>
                 <div className="deck"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
-                             yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName}/>
+                             yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
+                             action={this.state.actionChose}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
-                              currentBet={opponent.currentBet}/>
+                              currentBet={opponent.currentBet} currentAction={opponent.actionChose}/>
                 ))}
 
             </>

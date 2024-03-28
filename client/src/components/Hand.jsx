@@ -16,7 +16,9 @@ class Hand extends React.Component {
         return(
             <>
                 <div className='handArea'>
+
                     <div className='leftOfCards'>
+                        <div className='yourBet'>{`${this.props.action} ${this.props.currentBet}`}</div>
                         <div className='yourName'>{this.props.yourName}</div>
                         <div className='chipAmount'>{"Chips: " + this.props.chipAmount}</div>
                     </div>

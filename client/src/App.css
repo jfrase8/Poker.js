@@ -165,7 +165,6 @@ body{
 .leftOfCards {
   display: flex;
   align-items: center;
-  justify-content: center; /* Center items horizontally */
   flex-flow: column nowrap;
   box-sizing: border-box;
   border: 3px solid black;
@@ -288,12 +287,21 @@ body{
 }
 .betArea {
   position: absolute;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center items horizontally */
+  flex-flow: column nowrap;
   box-sizing: border-box;
   width: 30%;
   height: 100%;
   left: 70%;
   border: 2px solid black;
+}
+.betAmount {
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 125%;
+  background-image: url("../public/Other_Images/poker_chip.png");
 }
 
 .opponent1 { transform: translate(-230%, 10%); }
@@ -306,3 +314,4 @@ body{
 
 .chipAmount { color: white; text-align: center; font-size: 150%; background-color: black; width: 100%; }
 .yourName { color: black; text-align: center; font-size: 300%; background-color: #eba014; border: 1px solid black; width: 100%; }
+.yourBet { color: black; text-align: center; width: 100%; font-size: 150%; margin: 5%; }

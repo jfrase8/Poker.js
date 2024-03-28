@@ -7,8 +7,9 @@ class Client {
         this.turnNumber = 0;
         this.isYourTurn = false;
         this.chipAmount = 1000;
-        this.currentBet = 0;
+        this.currentBet = "";
         this.status = 'ready';
+        this.actionChose = "";
     }
 }
 
