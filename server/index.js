@@ -257,7 +257,7 @@ io.on("connection", (socket) => {
                     let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
                     // Send new round info to clients
-                    io.to(client.id).emit('nextRound', playerHand, client.chipAmount, client.isYourTurn, opponents);
+                    io.to(client.id).emit('nextRound', playerHand, client, opponents);
                 }
             }
         }
