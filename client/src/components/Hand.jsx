@@ -24,7 +24,7 @@ class Hand extends React.Component {
                         {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
                     </div>
                     <div className='rightOfCards'>
-                        <TurnChoices choices={this.props.choices}/>
+                        <TurnChoices lobbyName={this.props.lobbyName} choices={this.props.choices}/>
                     </div>
                 </div>
             </>

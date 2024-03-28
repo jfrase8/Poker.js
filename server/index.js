@@ -154,22 +154,27 @@ io.on("connection", (socket) => {
             let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
             // Send all info of players to this client
-            io.to(client.id).emit('playerInfo', clientHand, client, opponents, lobby);
+            io.to(client.id).emit('playerInfo', clientHand, client, opponents, lobbyName);
         }
     });
 
-    socket.on('turnChoice', (lobby, choice, betAmount) => {
+    socket.on('turnChoice', (lobbyName, choice, betAmount) => {
 
+        console.log(lobbyName);
+        let lobby = lobbyManager.getLobby(lobbyName);
+        console.log(lobby);
         let player = lobby.findClient(socket.id);
         let handSize = lobby.deck.dealtHands[0].length;
 
         if (choice == 'fold')
         {
+            // show that this player is folded
             player.status = 'folded';
         }
         else {
             player.status = 'done'
         }
+
 
         if (choice == 'bet')
             player.currentBet = betAmount;
@@ -217,22 +222,25 @@ io.on("connection", (socket) => {
             }
             else 
             {
+                player.isYourTurn = false;
+
+                // After a cards are flipped, turn switches to person after the dealer who is still in round
+                let nextPlayer = 2;
+
+                while (true)
+                {
+                    // Make sure this player is still in round
+                    if (lobby.clients[nextPlayer-1].status == 'folded')
+                        nextPlayer++;
+                    else
+                        break;
+                }
+                
+                lobby.clients[nextPlayer-1].isYourTurn = true;
+
                 // Deal the next round of cards
                 if (handSize == 2)
-                {
-                    let newPlayer = player.turnNumber - 2;
-                    if (newPlayer < 1)
-                        newPlayer += 5;
-
-                    for (let client of lobby.clients)
-                    {
-                        if (newPlayer == client.turnNumber)
-                            client.isYourTurn = true;
-                    }
-
-                    lobby.deck.dealFlop();
-                }
-                    
+                    lobby.deck.dealFlop(); 
                 else if (handSize > 2)
                     lobby.deck.dealTurnRiver();
                 
@@ -244,34 +252,55 @@ io.on("connection", (socket) => {
                     client.currentBet = 0;
 
                     // Get this players new hand
-                    playerHand = lobby.deck.getPlayerHand(client)
+                    playerHand = lobby.deck.getPlayerHand(client);
+
+                    // Get opponents
+                    let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
                     // Send new round info to clients
-                    io.to(client.id).emit('nextRound', playerHand, client.chipAmount);
+                    io.to(client.id).emit('nextRound', playerHand, client.chipAmount, client.isYourTurn, opponents);
                 }
             }
         }
         else 
         {
-            if (choice == 'check')
+            player.isYourTurn = false;
+
+            // Switch turn to next available player
+            let nextPlayer = player.turnNumber+1;
+
+            // Make sure not to go out of bounds
+            if (nextPlayer > lobby.clients.length)
+                nextPlayer = 1;
+
+            while (true)
             {
-
-                // Check if all players have finished this round
-                if (count == lobby.clients.length)
-                {
-                    
-                }
-                else {
-
-                }
+                // Make sure this player is still in round
+                if (lobby.clients[nextPlayer-1].status == 'folded')
+                    nextPlayer++;
+                else
+                    break;
             }
+
+            lobby.clients[nextPlayer-1].isYourTurn = true;
+
+            for (let client of lobby.clients)
+            {
+                // Get opponents
+                let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+
+                // Send next turn info to clients
+                io.to(client.id).emit('nextTurn', client, opponents);
+            }
+
         }
-
-        // Switch turn to next player, or move onto next phase if all other plays are finished
-        player.isYourTurn = false;
-
     });
-    socket.on('updateCurrentBet', (lobby, currentBet) => {
+    socket.on('updateCurrentBet', (lobbyName, currentBet) => {
+
+        console.log(lobbyName);
+
+        // Get the lobby
+        let lobby = lobbyManager.getLobby(lobbyName);
 
         console.log(lobby);
 
@@ -280,6 +309,17 @@ io.on("connection", (socket) => {
 
         // Update their currentBet amount
         client.currentBet = currentBet;
+
+        // Other clients
+        let otherClients = lobby.clients.filter(client => client.id !== socket.id);
+
+        // Send this new info to all other clients
+        for (let client of otherClients)
+        {
+            let opponents = lobby.clients.filter(opponent => opponent.id !== client.id);
+
+            io.to(client.id).emit('updateBet', opponents);
+        }
     });
 });
 

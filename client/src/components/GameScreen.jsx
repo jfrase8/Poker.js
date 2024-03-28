@@ -21,13 +21,13 @@ class GameScreen extends React.Component {
             numOfBets: 0,
             role: "",
             turnChoices: [],
-            lobby: null,
+            lobbyName: "",
         }
     }
     componentDidMount() {
-        socket.on('playerInfo', (hand, yourInfo, opponents, lobbyObj) => {
+        socket.on('playerInfo', (hand, yourInfo, opponents, lobbyName) => {
             this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
-                           chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobby: lobbyObj}, () => {
+                           chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobbyName: lobbyName}, () => {
                             // Set your roll for a 3+ player game
                             if (opponents.length > 1)
                             {
@@ -40,7 +40,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Small Blind", currentBet:10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
                                     });
                                 }
                                 // Big Blind
@@ -49,7 +49,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Big Blind", currentBet: 20}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
                                     });
                                 }
                                 // No role
@@ -65,7 +65,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Small Blind Dealer", currentBet: 10}, () => 
                                     {
                                         this.checkYourTurn();
-                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
                                     });
                                 }
                                 // Big Blind
@@ -74,7 +74,7 @@ class GameScreen extends React.Component {
                                     this.setState({role: "Big Blind", currentBet: 20}, () =>
                                     {
                                         this.checkYourTurn()
-                                        socket.emit('updateCurrentBet', this.state.lobby, this.state.currentBet);
+                                        socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet);
                                     });
                                 }
                             }
@@ -83,10 +83,16 @@ class GameScreen extends React.Component {
                             this.setState({opponents: opponents});
                         });
         });
+        socket.on('nextTurn', (you, opponents) => {
+            this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents}, () => {
+                this.checkYourTurn();
+            });
+        });
     }
     componentWillUnmount() {
         // Remove event listeners when the component unmounts
         socket.off('playerInfo');
+        socket.off('nextTurn');
     }
 
     checkYourTurn() {
@@ -216,7 +222,7 @@ class GameScreen extends React.Component {
             <>
                 <div className="deck"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
-                             yourName={this.state.yourName} choices={this.state.turnChoices}/>
+                             yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
