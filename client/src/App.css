@@ -315,3 +315,5 @@ body{
 .chipAmount { color: white; text-align: center; font-size: 150%; background-color: black; width: 100%; }
 .yourName { color: black; text-align: center; font-size: 300%; background-color: #eba014; border: 1px solid black; width: 100%; }
 .yourBet { color: black; text-align: center; width: 100%; font-size: 150%; margin: 5%; }
+
+.pot { text-align: center; font-size: 300%; color: white; position: absolute; right: 45%; }

@@ -6,7 +6,6 @@ class Card extends React.Component {
         imageUrl: `Cards/${this.props.value}_of_${this.props.suit}.png`
     };
     render() {
-        console.log(this.state.imageUrl);
         return(
             <>
                 <div className="card" style={{backgroundImage: `url("Cards/${this.props.value}_of_${this.props.suit}.png")`}}>

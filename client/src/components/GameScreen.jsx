@@ -2,6 +2,7 @@ import React from "react";
 import Hand from "./Hand.jsx";
 import socket from "../socket.js";
 import Opponent from "./Opponent.jsx";
+import Pot from "./Pot.jsx";
 
 class GameScreen extends React.Component {
     constructor(props)
@@ -23,6 +24,7 @@ class GameScreen extends React.Component {
             turnChoices: [],
             lobbyName: "",
             actionChose: "",
+            potAmount: 0,
         }
     }
     componentDidMount() {
@@ -87,10 +89,30 @@ class GameScreen extends React.Component {
         socket.on('nextTurn', (you, opponents, choice) => {
             this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice}, () => {
                 this.checkYourTurn();
+                console.log("Opponents: " + this.state.opponents[0].actionChose);
+                console.log("You: " + this.state.actionChose);
             });
         });
         socket.on('updateBet', (opponents) => {
             this.setState({opponents: opponents});
+        });
+        socket.on('nextRound', (yourHand, you, opponents, pot) => {
+            // Split your hand into your two cards and the flop/turn/river cards
+            if (yourHand.length < 6)
+            {
+                let flop = [yourHand[2], yourHand[3], yourHand[4]];
+                this.setState({flop: flop});
+            }
+            else if (yourHand.length < 7)
+            {
+                let turn = yourHand[5];
+                this.setState({turnCard: turn});
+            }
+            else {
+                let river = yourHand[6];
+                this.setState({riverCard: river});
+            }
+            this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot});
         });
     }
     componentWillUnmount() {
@@ -110,7 +132,6 @@ class GameScreen extends React.Component {
     }
 
     opponentCSSorder(opponentTurnNumber){
-        console.log(this.state.yourTurnNumber);
         const cssNumbersWith5 = {
             "1-2": 1,
             "2-3": 1,
@@ -178,8 +199,6 @@ class GameScreen extends React.Component {
 
     determineTurnChoices(){
 
-        console.log(this.state.role);
-
         // Check if this isn't the first time you have bet this round
         if (this.state.numOfBets > 0)
             return ["Call", "Raise", "Fold"];
@@ -222,7 +241,6 @@ class GameScreen extends React.Component {
 
     render() {
         console.log(this.state.turnChoices);
-        console.log(this.state.role);
         return (
             <>
                 <div className="deck"></div>
@@ -234,6 +252,7 @@ class GameScreen extends React.Component {
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
                               currentBet={opponent.currentBet} currentAction={opponent.actionChose}/>
                 ))}
+                <Pot potAmount={this.state.potAmount}/>
 
             </>
         )

@@ -34,7 +34,6 @@ const LobbyScreen = () => {
         socket.emit('getLobbies');
         // then refresh lobby list
         socket.on('refreshLobbies', (serverLobbies) => {
-            console.log(serverLobbies);
             // Create a new array based on the existing state
             const newLobbyList = [...lobbies];
 

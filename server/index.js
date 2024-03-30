@@ -31,7 +31,6 @@ io.on("connection", (socket) => {
         
         // Get the lobby that client is leaving
         let lobby = lobbyManager.getLobby(lobbyName);
-        console.log(lobby);
 
         // Get the host of the lobby
         let host = lobby.host;
@@ -160,11 +159,14 @@ io.on("connection", (socket) => {
 
     socket.on('turnChoice', (lobbyName, choice, betAmount) => {
 
-        console.log(lobbyName);
         let lobby = lobbyManager.getLobby(lobbyName);
-        console.log(lobby);
         let player = lobby.findClient(socket.id);
         let handSize = lobby.deck.dealtHands[0].length;
+
+        console.log(player.nickname + " " + choice + "ed");
+
+        // Update their chosen action
+        player.actionChose = choice;
 
         if (choice == 'fold')
         {
@@ -176,8 +178,10 @@ io.on("connection", (socket) => {
         }
 
 
-        if (choice == 'bet')
+        if (choice == 'bet') {
             player.currentBet = betAmount;
+            client.chipAmount -= client.currentBet;
+        }
 
         if (choice == 'raise')
         {
@@ -188,20 +192,35 @@ io.on("connection", (socket) => {
                     client.status = 'ready';
             }
 
+            // Calculate added on amount and subtract that from players chips
+            let addedBet = betAmount - player.currentBet;
             player.currentBet = betAmount;
+            client.chipAmount -= addedBet;
         }
 
         if (choice == 'call')
         {
+            // Keep track of the added bet
+            let addedBet = 0;
+
             // Find highest currentBet
             let highestcurrentBet = 0;
             for (let client of lobby.clients)
             {
                 if (client.currentBet > highestcurrentBet)
                     highestcurrentBet = client.currentBet;
+                    
             }
+            addedBet = highestcurrentBet - player.currentBet;
+
+            console.log("Highest Current Bet: " + highestcurrentBet);
+            console.log("Added Bet: " + addedBet);
+
             // Set players currentBet to the highest current bet
             player.currentBet = highestcurrentBet;
+
+            // Subtract the added on bet from their chip amount
+            player.chipAmount -= addedBet;
         }
 
         // See how many players are ready for next round
@@ -224,7 +243,7 @@ io.on("connection", (socket) => {
             {
                 player.isYourTurn = false;
 
-                // After a cards are flipped, turn switches to person after the dealer who is still in round
+                // After cards are flipped, turn switches to person after the dealer who is still in round
                 let nextPlayer = 2;
 
                 while (true)
@@ -237,6 +256,7 @@ io.on("connection", (socket) => {
                 }
                 
                 lobby.clients[nextPlayer-1].isYourTurn = true;
+                console.log(lobby.clients[nextPlayer-1].nickname);
 
                 // Deal the next round of cards
                 if (handSize == 2)
@@ -247,9 +267,13 @@ io.on("connection", (socket) => {
                 for (let client of lobby.clients)
                 {
                     // Put their chips in the main pot
-                    lobby.pot += client.currentBet;
-                    client.currentBet = 0;
-
+                    lobby.deck.pot += client.currentBet;
+                    client.currentBet = "";
+                    client.actionChose = "";
+                    client.status = "ready";
+                }
+                for (let client of lobby.clients)
+                {
                     // Get this players new hand
                     playerHand = lobby.deck.getPlayerHand(client);
 
@@ -257,7 +281,7 @@ io.on("connection", (socket) => {
                     let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
                     // Send new round info to clients
-                    io.to(client.id).emit('nextRound', playerHand, client, opponents);
+                    io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
                 }
             }
         }
@@ -289,19 +313,15 @@ io.on("connection", (socket) => {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
 
                 // Send next turn info to clients
-                io.to(client.id).emit('nextTurn', client, opponents, choice);
+                io.to(client.id).emit('nextTurn', client, opponents, client.actionChose);
             }
 
         }
     });
     socket.on('updateCurrentBet', (lobbyName, currentBet, action) => {
 
-        console.log(lobbyName);
-
         // Get the lobby
         let lobby = lobbyManager.getLobby(lobbyName);
-
-        console.log(lobby);
 
         // Get the client who sent this signal
         let client = lobby.findClient(socket.id);

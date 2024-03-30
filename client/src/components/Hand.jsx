@@ -12,7 +12,6 @@ class Hand extends React.Component {
         };
     }
     render() {
-        console.log(this.props.cards);
         return(
             <>
                 <div className='handArea'>
