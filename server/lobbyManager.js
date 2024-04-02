@@ -10,6 +10,7 @@ class Client {
         this.currentBet = "";
         this.status = 'ready';
         this.actionChose = "";
+        this.role = "";
     }
 }
 
@@ -57,6 +58,42 @@ class Lobby
         this.playerNames.splice(randomIndex, 1);
 
         return randomName;
+    }
+
+    switchRoles() {
+        // Loops 3 times individually so that roles aren't ovewritten, and it shifts big blind, then small blind, then dealer over one.
+        // If it is a 2 player game, the roles should switch at the same time.
+        let clientsCount = this.clients.length;
+
+        let roles = {0: "Big Blind", 1: "Small Blind", 2: "Dealer"};
+
+        if (clientsCount > 2)
+        {
+            for (let r = 0; r < 3; r++)
+            {
+                for (let i = 0; i < clientsCount; i++)
+                {
+                    if (this.clients[i].role == roles[r])
+                    {
+                        // Make sure not to go out of bounds
+                        let roleswitch = i + 1;
+                        if (roleswitch > clientsCount)
+                            roleswitch = 0;
+                        this.clients[roleswitch].role = this.clients[i].role;
+                        this.clients[i].role = "";
+                    }
+                }
+            }
+        }
+        // Switch roles for a two player game
+        else {
+            let temp = this.clients[0].role;
+            this.clients[0].role = this.clients[1].role;
+            this.clients[1].role = temp;
+        }
+        // Update actionChose back to their role
+        for (let client of this.clients)
+            client.actionChose = client.role;
     }
 }
 

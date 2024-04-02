@@ -146,6 +146,17 @@ io.on("connection", (socket) => {
 
         for (let client of lobby.clients) {
 
+            // Set up roles on server
+            if (lobby.clients > 2)
+            {
+                if (client.turnNumber == 1) client.role = "Dealer";
+                if (client.turnNumber == 2) client.role = "Small Blind";
+                if (client.turnNumber == 3) client.role = "Big Blind";
+            }
+            else {
+                if (client.turnNumber == 1) client.role = "Small Blind";
+                else client.role = "Big Blind";
+            }
             // Get this clients hand
             let clientHand = lobby.deck.getPlayerHand(client);
 
@@ -162,6 +173,7 @@ io.on("connection", (socket) => {
         let lobby = lobbyManager.getLobby(lobbyName);
         let player = lobby.findClient(socket.id);
         let handSize = lobby.deck.dealtHands[0].length;
+        let roundOver = false;
 
         console.log(player.nickname + " " + choice + "ed");
 
@@ -177,75 +189,177 @@ io.on("connection", (socket) => {
             player.status = 'done'
         }
 
-
-        if (choice == 'bet') {
-            player.currentBet = betAmount;
-            client.chipAmount -= client.currentBet;
-        }
-
-        if (choice == 'raise')
-        {
-            // If player raised, all other players now get another turn
-            for (let client of lobby.clients)
-            {
-                if (client.id != player.id)
-                    client.status = 'ready';
-            }
-
-            // Calculate added on amount and subtract that from players chips
-            let addedBet = betAmount - player.currentBet;
-            player.currentBet = betAmount;
-            client.chipAmount -= addedBet;
-        }
-
-        if (choice == 'call')
-        {
-            // Keep track of the added bet
-            let addedBet = 0;
-
-            // Find highest currentBet
-            let highestcurrentBet = 0;
-            for (let client of lobby.clients)
-            {
-                if (client.currentBet > highestcurrentBet)
-                    highestcurrentBet = client.currentBet;
-                    
-            }
-            addedBet = highestcurrentBet - player.currentBet;
-
-            console.log("Highest Current Bet: " + highestcurrentBet);
-            console.log("Added Bet: " + addedBet);
-
-            // Set players currentBet to the highest current bet
-            player.currentBet = highestcurrentBet;
-
-            // Subtract the added on bet from their chip amount
-            player.chipAmount -= addedBet;
-        }
-
-        // See how many players are ready for next round
-        let count = 0;
+        // Check if everyone has folded (also get a number for total chips currrently bet by those that folded)
+        let foldCount = 0;
+        let totalCurrentBet = 0;
         for (let client of lobby.clients)
         {
-            if (client.status == 'done')
-                count++;
+            if (client.status == "folded")
+            {
+                foldCount++;
+                if (client.currentBet != "")
+                    totalCurrentBet += client.currentBet;
+            }
+        }
+        // Round is over, all but one player folded
+        if (foldCount == lobby.clients.length-1)
+        {
+            lobby.switchRoles();
+            console.log(lobby.clients);
+            for (let client of lobby.clients)
+            {
+                // This client won the hand
+                if (client.status != "folded")
+                {
+                    client.chipAmount += lobby.deck.pot + client.currentBet + totalCurrentBet;
+                    client.currentBet = "";
+                    io.to(client.id).emit('wonHand', client.chipAmount, client.role);
+                }
+            }
+            for (let client of lobby.clients)
+            {
+                // These clients need to update
+                if (client.status == "folded")
+                {
+                    io.to(client.id).emit('roundOver', client.role);
+                }
+            }
+
+            roundOver = true;
+            lobby.deck.resetDeck();
+
+            // Redeal new hands and update opponents on players screens
+            lobby.deck.dealHands(lobby.clients);
+            for (let client of lobby.clients)
+            {
+                let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+                io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client)));
+                io.to(client.id).emit('updateOpponents', opponents);
+            }
+                
         }
 
-        // Check if this is last turn of the round
-        if (count == lobby.clients.length) 
+        // Make sure round is not over because of everyone folding
+        if (!roundOver)
         {
-            // Figure out who wins
-            if (handSize == 7)
+            if (choice == 'bet') {
+                player.currentBet = betAmount;
+                client.chipAmount -= client.currentBet;
+            }
+    
+            if (choice == 'raise')
             {
-
+                // If player raised, all other players now get another turn
+                for (let client of lobby.clients)
+                {
+                    if (client.id != player.id)
+                        client.status = 'ready';
+                }
+    
+                // Calculate added on amount and subtract that from players chips
+                let addedBet = betAmount - player.currentBet;
+                player.currentBet = betAmount;
+                client.chipAmount -= addedBet;
+            }
+    
+            if (choice == 'call')
+            {
+                // Keep track of the added bet
+                let addedBet = 0;
+    
+                // Find highest currentBet
+                let highestcurrentBet = 0;
+                for (let client of lobby.clients)
+                {
+                    if (client.currentBet > highestcurrentBet)
+                        highestcurrentBet = client.currentBet;
+                        
+                }
+                addedBet = highestcurrentBet - player.currentBet;
+    
+                console.log("Highest Current Bet: " + highestcurrentBet);
+                console.log("Added Bet: " + addedBet);
+    
+                // Set players currentBet to the highest current bet
+                player.currentBet = highestcurrentBet;
+    
+                // Subtract the added on bet from their chip amount
+                player.chipAmount -= addedBet;
+            }
+    
+            // See how many players are ready for next round
+            let count = 0;
+            for (let client of lobby.clients)
+            {
+                if (client.status == 'done')
+                    count++;
+            }
+    
+            // Check if this is last turn of the round
+            if (count == lobby.clients.length) 
+            {
+                // Figure out who wins
+                if (handSize == 7)
+                {
+    
+                }
+                else 
+                {
+                    player.isYourTurn = false;
+    
+                    // After cards are flipped, turn switches to person after the dealer who is still in round
+                    let nextPlayer = 2;
+    
+                    while (true)
+                    {
+                        // Make sure this player is still in round
+                        if (lobby.clients[nextPlayer-1].status == 'folded')
+                            nextPlayer++;
+                        else
+                            break;
+                    }
+                    
+                    lobby.clients[nextPlayer-1].isYourTurn = true;
+                    console.log(lobby.clients[nextPlayer-1].nickname);
+    
+                    // Deal the next round of cards
+                    if (handSize == 2)
+                        lobby.deck.dealFlop(); 
+                    else if (handSize > 2)
+                        lobby.deck.dealTurnRiver();
+                    
+                    for (let client of lobby.clients)
+                    {
+                        // Put their chips in the main pot
+                        lobby.deck.pot += client.currentBet;
+                        client.currentBet = "";
+                        client.actionChose = "";
+                        client.status = "ready";
+                    }
+                    for (let client of lobby.clients)
+                    {
+                        // Get this players new hand
+                        playerHand = lobby.deck.getPlayerHand(client);
+    
+                        // Get opponents
+                        let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+    
+                        // Send new round info to clients
+                        io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
+                    }
+                }
             }
             else 
             {
                 player.isYourTurn = false;
-
-                // After cards are flipped, turn switches to person after the dealer who is still in round
-                let nextPlayer = 2;
-
+    
+                // Switch turn to next available player
+                let nextPlayer = player.turnNumber+1;
+    
+                // Make sure not to go out of bounds
+                if (nextPlayer > lobby.clients.length)
+                    nextPlayer = 1;
+    
                 while (true)
                 {
                     // Make sure this player is still in round
@@ -254,68 +368,19 @@ io.on("connection", (socket) => {
                     else
                         break;
                 }
-                
+    
                 lobby.clients[nextPlayer-1].isYourTurn = true;
-                console.log(lobby.clients[nextPlayer-1].nickname);
-
-                // Deal the next round of cards
-                if (handSize == 2)
-                    lobby.deck.dealFlop(); 
-                else if (handSize > 2)
-                    lobby.deck.dealTurnRiver();
-                
+    
                 for (let client of lobby.clients)
                 {
-                    // Put their chips in the main pot
-                    lobby.deck.pot += client.currentBet;
-                    client.currentBet = "";
-                    client.actionChose = "";
-                    client.status = "ready";
-                }
-                for (let client of lobby.clients)
-                {
-                    // Get this players new hand
-                    playerHand = lobby.deck.getPlayerHand(client);
-
                     // Get opponents
                     let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-
-                    // Send new round info to clients
-                    io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
+    
+                    // Send next turn info to clients
+                    io.to(client.id).emit('nextTurn', client, opponents, client.actionChose);
                 }
+    
             }
-        }
-        else 
-        {
-            player.isYourTurn = false;
-
-            // Switch turn to next available player
-            let nextPlayer = player.turnNumber+1;
-
-            // Make sure not to go out of bounds
-            if (nextPlayer > lobby.clients.length)
-                nextPlayer = 1;
-
-            while (true)
-            {
-                // Make sure this player is still in round
-                if (lobby.clients[nextPlayer-1].status == 'folded')
-                    nextPlayer++;
-                else
-                    break;
-            }
-
-            lobby.clients[nextPlayer-1].isYourTurn = true;
-
-            for (let client of lobby.clients)
-            {
-                // Get opponents
-                let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-
-                // Send next turn info to clients
-                io.to(client.id).emit('nextTurn', client, opponents, client.actionChose);
-            }
-
         }
     });
     socket.on('updateCurrentBet', (lobbyName, currentBet, action) => {
@@ -341,7 +406,7 @@ io.on("connection", (socket) => {
         {
             let opponents = lobby.clients.filter(opponent => opponent.id !== client.id);
 
-            io.to(client.id).emit('updateBet', opponents);
+            io.to(client.id).emit('updateOpponents', opponents);
         }
     });
 });

@@ -36,7 +36,7 @@ class GameScreen extends React.Component {
                             {
                                 // Host is dealer
                                 if (this.state.yourTurnNumber == 1)
-                                    this.setState({role: "Dealer"}, () => {this.checkYourTurn()});
+                                    this.setState({role: "Dealer"}, () => {this.checkYourTurn(); socket.emit('updateRole', this.state.role)});
                                 // Small Blind
                                 else if (this.state.yourTurnNumber == 2)
                                 {
@@ -44,6 +44,7 @@ class GameScreen extends React.Component {
                                     {
                                         this.checkYourTurn();
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
+                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                                 // Big Blind
@@ -53,6 +54,7 @@ class GameScreen extends React.Component {
                                     {
                                         this.checkYourTurn();
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
+                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                                 // No role
@@ -65,10 +67,11 @@ class GameScreen extends React.Component {
                                 // Small Blind and Dealer
                                 if (this.state.yourTurnNumber == 1)
                                 {
-                                    this.setState({role: "Small Blind Dealer", currentBet: 10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
+                                    this.setState({role: "Small Blind", currentBet: 10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
                                         this.checkYourTurn();
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
+                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                                 // Big Blind
@@ -78,6 +81,7 @@ class GameScreen extends React.Component {
                                     {
                                         this.checkYourTurn()
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
+                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                             }
@@ -93,7 +97,7 @@ class GameScreen extends React.Component {
                 console.log("You: " + this.state.actionChose);
             });
         });
-        socket.on('updateBet', (opponents) => {
+        socket.on('updateOpponents', (opponents) => {
             this.setState({opponents: opponents});
         });
         socket.on('nextRound', (yourHand, you, opponents, pot) => {
@@ -114,12 +118,26 @@ class GameScreen extends React.Component {
             }
             this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot});
         });
+        socket.on('wonHand', (chipAmount, newRole) => {
+            console.log("You won: " + this.state.potAmount);
+            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: "", chipAmount: chipAmount, potAmount: 0, role: newRole, actionChose: newRole});
+        });
+        socket.on('roundOver', (newRole) => {
+            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: "", potAmount: 0, role: newRole, actionChose: newRole});
+        });
+        socket.on('updateHand', (yourHand) => {
+            this.setState({yourHand: yourHand});
+        });
     }
     componentWillUnmount() {
         // Remove event listeners when the component unmounts
         socket.off('playerInfo');
         socket.off('nextTurn');
-        socket.off('updateBet')
+        socket.off('updateBet');
+        socket.off('wonHand');
+        socket.off('roundOver');
+        socket.off('updateHand');
+        
     }
 
     checkYourTurn() {
@@ -244,6 +262,7 @@ class GameScreen extends React.Component {
         return (
             <>
                 <div className="deck"></div>
+                <div className="communityCards"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
                              action={this.state.actionChose}/>
