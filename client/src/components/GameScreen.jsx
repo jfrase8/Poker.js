@@ -118,12 +118,18 @@ class GameScreen extends React.Component {
             }
             this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot});
         });
-        socket.on('wonHand', (chipAmount, newRole) => {
-            console.log("You won: " + this.state.potAmount);
-            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: "", chipAmount: chipAmount, potAmount: 0, role: newRole, actionChose: newRole});
+        socket.on('wonHand', (you) => {
+            console.log("You won: " + this.state.potAmount + this.state.opponents.currentBet);
+            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
+                           actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
+                this.checkYourTurn();
+            });
         });
-        socket.on('roundOver', (newRole) => {
-            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: "", potAmount: 0, role: newRole, actionChose: newRole});
+        socket.on('roundOver', (you) => {
+            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: you.role, 
+                           isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
+                this.checkYourTurn();
+            });
         });
         socket.on('updateHand', (yourHand) => {
             this.setState({yourHand: yourHand});
@@ -146,6 +152,9 @@ class GameScreen extends React.Component {
         {
             this.setState({turnChoices: this.determineTurnChoices()});
             this.setState({numOfBets: this.state.numOfBets+1});
+        }
+        else {
+            this.setState({turnChoices: []});
         }
     }
 

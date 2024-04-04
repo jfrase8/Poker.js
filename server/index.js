@@ -206,6 +206,7 @@ io.on("connection", (socket) => {
         {
             lobby.switchRoles();
             console.log(lobby.clients);
+            lobby.setTurns();
             for (let client of lobby.clients)
             {
                 // This client won the hand
@@ -213,7 +214,14 @@ io.on("connection", (socket) => {
                 {
                     client.chipAmount += lobby.deck.pot + client.currentBet + totalCurrentBet;
                     client.currentBet = "";
-                    io.to(client.id).emit('wonHand', client.chipAmount, client.role);
+                    
+                    // Reset blinds
+                    lobby.betBlinds();
+
+                    io.to(client.id).emit('wonHand', client);
+
+                    // Reset status
+                    client.status = 'ready';
                 }
             }
             for (let client of lobby.clients)
@@ -221,7 +229,10 @@ io.on("connection", (socket) => {
                 // These clients need to update
                 if (client.status == "folded")
                 {
-                    io.to(client.id).emit('roundOver', client.role);
+                    // Reset status
+                    client.status = 'ready';
+                    
+                    io.to(client.id).emit('roundOver', client);
                 }
             }
 

@@ -23,6 +23,7 @@ class Lobby
         this.deck = new DeckManager();
         this.locked = false;
         this.playerNames = ["Milo", "Joel", "Steve", "Hossain", "Matthew", "Dylan", "Zach", "Jesse", "Seth"];
+        this.currentBlinds = [10, 20];
     }
 
     addClient(clientID){
@@ -94,6 +95,43 @@ class Lobby
         // Update actionChose back to their role
         for (let client of this.clients)
             client.actionChose = client.role;
+    }
+
+    betBlinds() {
+        for (let client of this.clients)
+        {
+            if (client.role == "Big Blind")
+            {
+                client.currentBet = this.currentBlinds[1];
+                client.chipAmount -= client.currentBet;
+            }
+            if (client.role == "Small Blind")
+            {
+                client.currentBet = this.currentBlinds[0];
+                client.chipAmount -= client.currentBet;
+            }     
+        }
+    }
+
+    setTurns() {
+        for (let client of this.clients)
+        {
+            // Reset all clients turns and status'
+            client.isYourTurn = false;
+
+            if (this.clients.length > 2)
+            {
+                if (client.role == "Big Blind")
+                {
+                    // Technically client to the left of this client
+                    this.clients[client.turnNumber].isYourTurn = true;
+                }
+            }
+            else {
+                if (client.role == "Small Blind")
+                    client.isYourTurn = true;
+            }
+        }
     }
 }
 
