@@ -3,6 +3,7 @@ import Hand from "./Hand.jsx";
 import socket from "../socket.js";
 import Opponent from "./Opponent.jsx";
 import Pot from "./Pot.jsx";
+import CommunityCards from "./CommunityCards.jsx";
 
 class GameScreen extends React.Component {
     constructor(props)
@@ -116,7 +117,9 @@ class GameScreen extends React.Component {
                 let river = yourHand[6];
                 this.setState({riverCard: river});
             }
-            this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot});
+            this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot}, () => {
+                this.checkYourTurn();
+            });
         });
         socket.on('wonHand', (you) => {
             console.log("You won: " + this.state.potAmount + this.state.opponents.currentBet);
@@ -271,6 +274,7 @@ class GameScreen extends React.Component {
         return (
             <>
                 <div className="deck"></div>
+                <CommunityCards flop={this.state.flop} turnCard={this.state.turnCard} riverCard={this.state.riverCard}/>
                 <div className="communityCards"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}

@@ -55,6 +55,7 @@ body{
   }
 }
 #play {
+  cursor: pointer;
   transform: translateX(-50%);
   transform: translatey(-60%);
   font-family: 'Mate SC', serif;
@@ -95,33 +96,6 @@ body{
     width: 31vw;
     height: 10.5vh;
   }
-}
-#quit {
-  background:
-    /* Background colors don’t work with `background-origin`, so use a gradient. */
-    linear-gradient(
-        to bottom,
-        black, black
-      )
-      padding-box, /* ends at inner border edges */
-      border-box; /* extends to outer border edges */
-  
-  /* a clear border lets the background gradient shine through */
-  border: 6px solid transparent;
-  width: 30vw;
-  height: 10vh;
-  color: white;
-  font-size: 160%;
-
-  /* unpause the animation on hover */
-  &:hover {
-    color: #B8CCDE;
-  }
-  &:active {
-    width: 31vw;
-    height: 11vh;
-  }
-  
 }
 
 .deck {
@@ -196,6 +170,7 @@ body{
   width: 100%;
   font-size: 100%;
   flex-grow: 1;
+  cursor: pointer;
 }
 
 .lobbyScreen {
@@ -221,6 +196,7 @@ body{
   font-size: 50px;
   align-items: center;
   flex-wrap: nowrap;
+  cursor: pointer;
 }
 
 .newlobbies {
@@ -234,6 +210,7 @@ body{
   font-size: 40px;
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
 .defaultWaitMessage {
