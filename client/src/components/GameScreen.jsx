@@ -17,9 +17,7 @@ class GameScreen extends React.Component {
             isYourTurn: false,
             chipAmount: 0,
             currentBet: "",
-            flop: null,
-            turnCard: null,
-            riverCard: null,
+            communityCards: [],
             numOfBets: 0,
             role: "",
             turnChoices: [],
@@ -102,34 +100,34 @@ class GameScreen extends React.Component {
             this.setState({opponents: opponents});
         });
         socket.on('nextRound', (yourHand, you, opponents, pot) => {
-            // Split your hand into your two cards and the flop/turn/river cards
+            let cardsToAdd = [];
+            // Add cards to the community cards state
             if (yourHand.length < 6)
             {
-                let flop = [yourHand[2], yourHand[3], yourHand[4]];
-                this.setState({flop: flop});
+                cardsToAdd = [yourHand[2], yourHand[3], yourHand[4]];
             }
             else if (yourHand.length < 7)
             {
-                let turn = yourHand[5];
-                this.setState({turnCard: turn});
+                cardsToAdd.push(yourHand[5]);
             }
             else {
-                let river = yourHand[6];
-                this.setState({riverCard: river});
+                cardsToAdd.push(yourHand[6]);
             }
-            this.setState({opponents: opponents, currentBet: "", chipAmount: you.chipAmount, isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot}, () => {
+            let newCards = this.state.communityCards.concat(cardsToAdd);
+            this.setState({communityCards: newCards, opponents: opponents, currentBet: "", chipAmount: you.chipAmount, 
+                           isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot, numOfBets: 0}, () => {
                 this.checkYourTurn();
             });
         });
         socket.on('wonHand', (you) => {
             console.log("You won: " + this.state.potAmount + this.state.opponents.currentBet);
-            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
+            this.setState({communityCards: [], currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
                            actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
                 this.checkYourTurn();
             });
         });
         socket.on('roundOver', (you) => {
-            this.setState({flop: null, turnCard: null, riverCard: null, currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: you.role, 
+            this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: you.role, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
                 this.checkYourTurn();
             });
@@ -150,13 +148,17 @@ class GameScreen extends React.Component {
     }
 
     checkYourTurn() {
+        console.log("checking turn");
         // Check if its your turn
         if (this.state.isYourTurn)
         {
+            console.log("Is your turn");
+            console.log("# of bets: ", this.state.numOfBets);
             this.setState({turnChoices: this.determineTurnChoices()});
             this.setState({numOfBets: this.state.numOfBets+1});
         }
         else {
+            console.log("Not your turn");
             this.setState({turnChoices: []});
         }
     }
@@ -229,6 +231,8 @@ class GameScreen extends React.Component {
 
     determineTurnChoices(){
 
+        console.log("Determining Choices");
+        console.log("# of bets: ", this.state.numOfBets);
         // Check if this isn't the first time you have bet this round
         if (this.state.numOfBets > 0)
             return ["Call", "Raise", "Fold"];
@@ -238,12 +242,17 @@ class GameScreen extends React.Component {
         for (let opponent in this.state.opponents)
         {
             if (this.state.currentBet < opponent.currentBet)
+            {
+                console.log(this.state.currentBet, opponent.currentBet);
                 highestBet = false;
+            }
+                
         }
-
+        console.log(this.state.communityCards.length);
         // It is first round of betting
-        if (this.state.flop === null)
+        if (this.state.communityCards.length == 0)
         {
+            console.log("Community cards: " + this.state.communityCards.length);
             // You are the big blind
             if (this.state.role == "Big Blind")
             {
@@ -260,8 +269,8 @@ class GameScreen extends React.Component {
         // It is after the flop
         else
         {
-            // You are first to bet or everyone else has checked so far
-            if (this.state.role.contains("Small Blind") || highestBet)
+            console.log(highestBet);
+            if (highestBet)
                 return ["check", "bet", "fold"];
             // Someone else has bet
             else
@@ -274,7 +283,7 @@ class GameScreen extends React.Component {
         return (
             <>
                 <div className="deck"></div>
-                <CommunityCards flop={this.state.flop} turnCard={this.state.turnCard} riverCard={this.state.riverCard}/>
+                <CommunityCards cards={this.state.communityCards}/>
                 <div className="communityCards"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}

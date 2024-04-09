@@ -172,7 +172,7 @@ io.on("connection", (socket) => {
 
         let lobby = lobbyManager.getLobby(lobbyName);
         let player = lobby.findClient(socket.id);
-        let handSize = lobby.deck.dealtHands[0].length;
+        let handSize = lobby.deck.dealtHands[0].cards.length;
         let roundOver = false;
 
         console.log(player.nickname + " " + choice + "ed");
@@ -205,7 +205,6 @@ io.on("connection", (socket) => {
         if (foldCount == lobby.clients.length-1)
         {
             lobby.switchRoles();
-            console.log(lobby.clients);
             lobby.setTurns();
             for (let client of lobby.clients)
             {
@@ -331,11 +330,12 @@ io.on("connection", (socket) => {
                     }
                     
                     lobby.clients[nextPlayer-1].isYourTurn = true;
-                    console.log(lobby.clients[nextPlayer-1].nickname);
     
                     // Deal the next round of cards
                     if (handSize == 2)
-                        lobby.deck.dealFlop(); 
+                    {
+                        lobby.deck.dealFlop();
+                    }
                     else if (handSize > 2)
                         lobby.deck.dealTurnRiver();
                     

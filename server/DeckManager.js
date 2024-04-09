@@ -35,18 +35,17 @@ class DeckManager {
         }
     }
     dealFlop() {
-        let flop = [shuffledDeck.pop(), shuffledDeck.pop(), shuffledDeck.pop()];
-        for (let hand of this.dealtHands) {
-            hand = hand.cards.concat(flop);
-        }
+        // Get rid of one card for burn card
+        let burnCard = this.cards.pop();
+        let flop = [this.cards.pop(), this.cards.pop(), this.cards.pop()];
+        this.dealtHands.forEach(hand => { hand.cards = hand.cards.concat(flop); });
     }
     dealTurnRiver() {
-        for (let hand of this.dealtHands) {
-            hand.cards.push(this.shuffleDeck.pop());
-        }
+        // Get rid of one card for burn card
+        let burnCard = this.cards.pop();
+        this.dealtHands.forEach(hand => { hand.cards.push(this.cards.pop()); });
     }
     getPlayerHand(player) {
-        console.log("checking player: " + player);
         for (let hand of this.dealtHands) {
             if (hand.player.id == player.id)
             {

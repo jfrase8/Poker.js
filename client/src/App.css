@@ -294,3 +294,15 @@ body{
 .yourBet { color: black; text-align: center; width: 100%; font-size: 150%; margin: 5%; }
 
 .pot { text-align: center; font-size: 300%; color: white; position: absolute; right: 45%; }
+
+.communityCards {
+  position: fixed;
+  top: 7%;
+  left: 40%;
+  height: 26vh;
+  width: 20%;
+  text-align: center;
+  display: flex;
+  border: 3px solid black;
+  gap: 2%;
+}
