@@ -43,7 +43,8 @@ class DeckManager {
     dealTurnRiver() {
         // Get rid of one card for burn card
         let burnCard = this.cards.pop();
-        this.dealtHands.forEach(hand => { hand.cards.push(this.cards.pop()); });
+        let turnRiver = this.cards.pop();
+        this.dealtHands.forEach(hand => { hand.cards.push(turnRiver) });
     }
     getPlayerHand(player) {
         for (let hand of this.dealtHands) {

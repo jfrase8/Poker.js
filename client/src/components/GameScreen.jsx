@@ -129,6 +129,7 @@ class GameScreen extends React.Component {
         socket.on('roundOver', (you) => {
             this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: you.role, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
+                console.log("Round over, is it your turn?", this.state.isYourTurn);
                 this.checkYourTurn();
             });
         });

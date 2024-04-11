@@ -78,10 +78,14 @@ class Lobby
                     {
                         // Make sure not to go out of bounds
                         let roleswitch = i + 1;
-                        if (roleswitch > clientsCount)
+                        if (roleswitch == clientsCount)
                             roleswitch = 0;
+
                         this.clients[roleswitch].role = this.clients[i].role;
                         this.clients[i].role = "";
+
+                        // Break so role doesn't get switched multiple times
+                        break;
                     }
                 }
             }
@@ -94,7 +98,8 @@ class Lobby
         }
         // Update actionChose back to their role
         for (let client of this.clients)
-            client.actionChose = client.role;
+            if (client.role != "Dealer") client.actionChose = client.role;
+            else client.actionChose = "";
     }
 
     betBlinds() {
@@ -114,17 +119,23 @@ class Lobby
     }
 
     setTurns() {
+        this.clients.forEach(client => {
+            // Reset all clients turns
+            client.isYourTurn = false;
+        });
+
         for (let client of this.clients)
         {
-            // Reset all clients turns and status'
-            client.isYourTurn = false;
-
             if (this.clients.length > 2)
             {
                 if (client.role == "Big Blind")
                 {
-                    // Technically client to the left of this client
-                    this.clients[client.turnNumber].isYourTurn = true;
+                    // Technically client to the left of this client (check for out of bounds)
+                    let boundCheck = client.turnNumber;
+                    if (boundCheck == this.clients.length) boundCheck = 0;
+
+                    this.clients[boundCheck].isYourTurn = true;
+                    console.log(this.clients[boundCheck]);
                 }
             }
             else {

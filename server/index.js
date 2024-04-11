@@ -147,7 +147,7 @@ io.on("connection", (socket) => {
         for (let client of lobby.clients) {
 
             // Set up roles on server
-            if (lobby.clients > 2)
+            if (lobby.clients.length > 2)
             {
                 if (client.turnNumber == 1) client.role = "Dealer";
                 if (client.turnNumber == 2) client.role = "Small Blind";
@@ -176,6 +176,10 @@ io.on("connection", (socket) => {
         let roundOver = false;
 
         console.log(player.nickname + " " + choice + "ed");
+
+        lobby.clients.forEach(client => {
+            console.log(`Client ${client.turnNumber-1} role: ${client.role}`);
+        });
 
         // Update their chosen action
         player.actionChose = choice;
@@ -211,7 +215,9 @@ io.on("connection", (socket) => {
                 // This client won the hand
                 if (client.status != "folded")
                 {
-                    client.chipAmount += lobby.deck.pot + client.currentBet + totalCurrentBet;
+                    if (client.currentBet == "") client.currentBet = 0;
+                    client.chipAmount += parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
+                    console.log(client.chipAmount);
                     client.currentBet = "";
                     
                     // Reset blinds
@@ -231,6 +237,10 @@ io.on("connection", (socket) => {
                     // Reset status
                     client.status = 'ready';
                     
+                    // Make sure someone who doesn't have a blind has nothing as their current bet
+                    if ((client.role == "" || client.role == "Dealer") && client.currentBet != "") client.currentBet = "";
+
+                    console.log(client);
                     io.to(client.id).emit('roundOver', client);
                 }
             }
@@ -301,7 +311,7 @@ io.on("connection", (socket) => {
             let count = 0;
             for (let client of lobby.clients)
             {
-                if (client.status == 'done')
+                if (client.status == 'done' || client.status == 'folded')
                     count++;
             }
     
@@ -344,8 +354,13 @@ io.on("connection", (socket) => {
                         // Put their chips in the main pot
                         lobby.deck.pot += client.currentBet;
                         client.currentBet = "";
-                        client.actionChose = "";
-                        client.status = "ready";
+
+                        // Check if client has folded
+                        if (client.status != 'folded')
+                        {
+                            client.actionChose = "";
+                            client.status = "ready";
+                        }
                     }
                     for (let client of lobby.clients)
                     {

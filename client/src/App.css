@@ -300,8 +300,9 @@ body{
   top: 7%;
   left: 40%;
   height: 26vh;
-  width: 20%;
-  text-align: center;
+  width: 30%;
+  align-items: flex-start;
+  justify-content: flex-start;
   display: flex;
   border: 3px solid black;
   gap: 2%;
