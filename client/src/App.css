@@ -307,3 +307,10 @@ body{
   border: 3px solid black;
   gap: 2%;
 }
+
+.slider {
+  width: 200px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+}
