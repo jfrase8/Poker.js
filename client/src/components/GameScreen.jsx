@@ -33,11 +33,8 @@ class GameScreen extends React.Component {
                             // Set your roll for a 3+ player game
                             if (opponents.length > 1)
                             {
-                                // Host is dealer
-                                if (this.state.yourTurnNumber == 1)
-                                    this.setState({role: "Dealer"}, () => {this.checkYourTurn(); socket.emit('updateRole', this.state.role)});
                                 // Small Blind
-                                else if (this.state.yourTurnNumber == 2)
+                                if (this.state.yourTurnNumber == 2)
                                 {
                                     this.setState({role: "Small Blind", currentBet:10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
@@ -63,7 +60,7 @@ class GameScreen extends React.Component {
                             // Set your role for a 2 player game
                             else
                             {
-                                // Small Blind and Dealer
+                                // Small Blind
                                 if (this.state.yourTurnNumber == 1)
                                 {
                                     this.setState({role: "Small Blind", currentBet: 10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
@@ -127,7 +124,10 @@ class GameScreen extends React.Component {
             });
         });
         socket.on('roundOver', (you) => {
-            this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: you.role, 
+            let shownText = "";
+            if (you.actionChose == "fold") shownText = "fold";
+            else shownText = you.role;
+            this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: shownText, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
                 console.log("Round over, is it your turn?", this.state.isYourTurn);
                 this.checkYourTurn();

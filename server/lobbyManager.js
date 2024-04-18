@@ -66,7 +66,7 @@ class Lobby
         // If it is a 2 player game, the roles should switch at the same time.
         let clientsCount = this.clients.length;
 
-        let roles = {0: "Big Blind", 1: "Small Blind", 2: "Dealer"};
+        let roles = {0: "Big Blind", 1: "Small Blind"};
 
         if (clientsCount > 2)
         {
@@ -97,9 +97,7 @@ class Lobby
             this.clients[1].role = temp;
         }
         // Update actionChose back to their role
-        for (let client of this.clients)
-            if (client.role != "Dealer") client.actionChose = client.role;
-            else client.actionChose = "";
+        for (let client of this.clients) client.actionChose = client.role;
     }
 
     betBlinds() {

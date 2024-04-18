@@ -149,7 +149,6 @@ io.on("connection", (socket) => {
             // Set up roles on server
             if (lobby.clients.length > 2)
             {
-                if (client.turnNumber == 1) client.role = "Dealer";
                 if (client.turnNumber == 2) client.role = "Small Blind";
                 if (client.turnNumber == 3) client.role = "Big Blind";
             }
@@ -238,7 +237,8 @@ io.on("connection", (socket) => {
                     client.status = 'ready';
                     
                     // Make sure someone who doesn't have a blind has nothing as their current bet
-                    if ((client.role == "" || client.role == "Dealer") && client.currentBet != "") client.currentBet = "";
+                    if ((client.role == "") && client.currentBet != "") client.currentBet = "";
+
 
                     console.log(client);
                     io.to(client.id).emit('roundOver', client);
@@ -352,10 +352,13 @@ io.on("connection", (socket) => {
                     for (let client of lobby.clients)
                     {
                         // Put their chips in the main pot
-                        lobby.deck.pot += client.currentBet;
+                        if (lobby.deck.pot == "") lobby.deck.pot = 0; // Make sure to switch pot to an int if this is the first time chips are going in
+                        if (client.currentBet == "") client.currentBet = 0; // Make sure to change clients current bet to 0 if it is a blank string
+                        lobby.deck.pot += parseInt(client.currentBet);
                         client.currentBet = "";
 
                         // Check if client has folded
+                        console.log(client.nickname, client.status);
                         if (client.status != 'folded')
                         {
                             client.actionChose = "";
@@ -382,12 +385,12 @@ io.on("connection", (socket) => {
                 // Switch turn to next available player
                 let nextPlayer = player.turnNumber+1;
     
-                // Make sure not to go out of bounds
-                if (nextPlayer > lobby.clients.length)
-                    nextPlayer = 1;
-    
+                console.log("Next player turn number again:", nextPlayer);
                 while (true)
                 {
+                    // Make sure not to go out of bounds
+                    if (nextPlayer > lobby.clients.length) nextPlayer = 1;
+
                     // Make sure this player is still in round
                     if (lobby.clients[nextPlayer-1].status == 'folded')
                         nextPlayer++;
