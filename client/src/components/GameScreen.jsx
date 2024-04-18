@@ -24,6 +24,7 @@ class GameScreen extends React.Component {
             lobbyName: "",
             actionChose: "",
             potAmount: 0,
+            currentBlind: 20,
         }
     }
     componentDidMount() {
@@ -288,7 +289,7 @@ class GameScreen extends React.Component {
                 <div className="communityCards"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
-                             action={this.state.actionChose}/>
+                             action={this.state.actionChose} currentBlind={this.state.currentBlind}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
