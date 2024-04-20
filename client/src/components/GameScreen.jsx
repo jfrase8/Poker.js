@@ -237,16 +237,18 @@ class GameScreen extends React.Component {
         console.log("# of bets: ", this.state.numOfBets);
         // Check if this isn't the first time you have bet this round
         if (this.state.numOfBets > 0)
-            return ["Call", "Raise", "Fold"];
+            return ["call", "raise", "fold"];
 
         // Check if you currently have highest best
         let highestBet = true;  
-        for (let opponent in this.state.opponents)
+        for (let opponent of this.state.opponents)
         {
+            console.log(opponent);
             if (this.state.currentBet < opponent.currentBet)
             {
                 console.log(this.state.currentBet, opponent.currentBet);
                 highestBet = false;
+                console.log("happened");
             }
                 
         }
@@ -276,7 +278,7 @@ class GameScreen extends React.Component {
                 return ["check", "bet", "fold"];
             // Someone else has bet
             else
-                return ["Call", "Raise", "Fold"];
+                return ["call", "raise", "fold"];
         }
     }
 
@@ -289,7 +291,7 @@ class GameScreen extends React.Component {
                 <div className="communityCards"></div>
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
-                             action={this.state.actionChose} currentBlind={this.state.currentBlind}/>
+                             action={this.state.actionChose} currentBlind={this.state.currentBlind} />
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 

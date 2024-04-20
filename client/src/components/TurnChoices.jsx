@@ -5,6 +5,16 @@ const TurnChoices = (props) => {
 
     const [showSlider, setShowSlider] = useState(false);
     const [betRaise, setBetRaise] = useState('');
+    const [highestBet, setHighestBet] = useState(props.currentBlind);
+
+    useEffect(() => {
+        socket.on('returnHighestBet', (_highestBet) => {
+            setHighestBet(_highestBet);
+        });
+        return () => {
+            socket.off('returnHighestBet');
+        };
+    }, []);
 
     const sendChoice = (choice) => {
         console.log(choice);
@@ -13,12 +23,18 @@ const TurnChoices = (props) => {
             // Create bet/raise popup
             setShowSlider(true);
 
-            if (choice == 'Bet') setBetRaise('bet');
-            else setBetRaise('Raise');
+            if (choice == 'raise') 
+            {
+                setBetRaise('raise');
+
+                // Get the highest current bet from the server
+                socket.emit('getHighestBet', props.lobbyName);
+            }
+            else setBetRaise('bet');
         }
         else 
         {
-            socket.emit('turnChoice', props.lobbyName, choice, betAmount);
+            socket.emit('turnChoice', props.lobbyName, choice);
         }
     };
 
@@ -29,7 +45,7 @@ const TurnChoices = (props) => {
                     {choice}
                 </button>
             ))}
-            <DraggableSlider showSlider={showSlider} startAmount={props.currentBlind} choice={betRaise} lobbyName={props.lobbyName}/>
+            <DraggableSlider showSlider={showSlider} startAmount={props.currentBlind + highestBet} choice={betRaise} lobbyName={props.lobbyName}/>
         </>
     );
 }
@@ -37,6 +53,11 @@ const TurnChoices = (props) => {
 const DraggableSlider = (props) => {
 
     const [value, setValue] = useState(props.startAmount);
+    const [showSlider, setShowSlider] = useState(props.showSlider);
+
+    useEffect(() => {
+        setShowSlider(props.showSlider);
+    }, [props.showSlider]);
 
     const handleValue = (event) => {
         setValue(event.target.value);
@@ -44,14 +65,15 @@ const DraggableSlider = (props) => {
 
     const handleConfirm = () => {
         // Check for wrongly inputted values
-        socket.emit('turnChoice', props.lobbyName, choice, value);
-        props.showSlider = false;
+
+        socket.emit('turnChoice', props.lobbyName, props.choice, value);
+        setShowSlider(false);
     }
 
     return(
         <>
             {
-                props.showSlider && (
+                showSlider && (
                     <div>
                         <input type='text' value={value} className='slider' onChange={handleValue} 
                         placeholder={props.startAmount} />

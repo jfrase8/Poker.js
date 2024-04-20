@@ -264,7 +264,7 @@ io.on("connection", (socket) => {
         {
             if (choice == 'bet') {
                 player.currentBet = betAmount;
-                client.chipAmount -= client.currentBet;
+                player.chipAmount -= player.currentBet;
             }
     
             if (choice == 'raise')
@@ -275,11 +275,14 @@ io.on("connection", (socket) => {
                     if (client.id != player.id)
                         client.status = 'ready';
                 }
-    
+
                 // Calculate added on amount and subtract that from players chips
                 let addedBet = betAmount - player.currentBet;
                 player.currentBet = betAmount;
-                client.chipAmount -= addedBet;
+                player.chipAmount -= addedBet;
+
+                console.log("Player current bet:", player.currentBet);
+                console.log("Player chip total:", player.chipAmount);
             }
     
             if (choice == 'call')
@@ -296,7 +299,7 @@ io.on("connection", (socket) => {
                         
                 }
                 addedBet = highestcurrentBet - player.currentBet;
-    
+
                 console.log("Highest Current Bet: " + highestcurrentBet);
                 console.log("Added Bet: " + addedBet);
     
@@ -405,6 +408,8 @@ io.on("connection", (socket) => {
                     // Get opponents
                     let opponents = lobby.clients.filter(_client => _client.id !== client.id);
     
+                    console.log(client);
+
                     // Send next turn info to clients
                     io.to(client.id).emit('nextTurn', client, opponents, client.actionChose);
                 }
@@ -437,6 +442,16 @@ io.on("connection", (socket) => {
 
             io.to(client.id).emit('updateOpponents', opponents);
         }
+    });
+
+    socket.on('getHighestBet', (lobbyName) => {
+        let lobby = lobbyManager.getLobby(lobbyName);
+
+        let highestBet = 0;
+        for (let client of lobby.clients){
+            if (client.currentBet > highestBet) highestBet = client.currentBet;
+        }
+        io.to(socket.id).emit('returnHighestBet', highestBet);
     });
 });
 
