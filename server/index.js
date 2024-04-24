@@ -156,8 +156,8 @@ io.on("connection", (socket) => {
                 if (client.turnNumber == 1) client.role = "Small Blind";
                 else client.role = "Big Blind";
             }
-            // Get this clients hand
-            let clientHand = lobby.deck.getPlayerHand(client);
+            // Get this clients cards
+            let clientHand = lobby.deck.getPlayerHand(client).cards;
 
             // Find opponents
             let opponents = lobby.clients.filter(_client => _client.id !== client.id);
@@ -253,7 +253,7 @@ io.on("connection", (socket) => {
             for (let client of lobby.clients)
             {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client)));
+                io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
                 io.to(client.id).emit('updateOpponents', opponents);
             }
                 
@@ -324,7 +324,7 @@ io.on("connection", (socket) => {
                 // Figure out who wins
                 if (handSize == 7)
                 {
-    
+                    let winner = lobby.deck.findWinner(lobbyName, lobbyManager);
                 }
                 else 
                 {
@@ -370,8 +370,8 @@ io.on("connection", (socket) => {
                     }
                     for (let client of lobby.clients)
                     {
-                        // Get this players new hand
-                        playerHand = lobby.deck.getPlayerHand(client);
+                        // Get this players new cards
+                        playerHand = lobby.deck.getPlayerHand(client).cards;
     
                         // Get opponents
                         let opponents = lobby.clients.filter(_client => _client.id !== client.id);

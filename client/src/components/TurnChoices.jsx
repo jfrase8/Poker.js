@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import socket from '../socket';
+import BetBox from './BetBox';
 
 const TurnChoices = (props) => {
 
-    const [showSlider, setShowSlider] = useState(false);
+    const [showBox, setShowBox] = useState(false);
     const [betRaise, setBetRaise] = useState('');
-    const [highestBet, setHighestBet] = useState(props.currentBlind);
+    const [minBetRaise, setMinBetRaise] = useState(props.currentBlind*2);
 
     useEffect(() => {
         socket.on('returnHighestBet', (_highestBet) => {
-            setHighestBet(_highestBet);
+            console.log("highest bet: ", _highestBet);
+            setMinBetRaise(props.currentBlind + _highestBet);
         });
         return () => {
             socket.off('returnHighestBet');
@@ -21,7 +23,7 @@ const TurnChoices = (props) => {
         if (choice == 'bet' || choice == 'raise')
         {
             // Create bet/raise popup
-            setShowSlider(true);
+            setShowBox(true);
 
             if (choice == 'raise') 
             {
@@ -45,44 +47,9 @@ const TurnChoices = (props) => {
                     {choice}
                 </button>
             ))}
-            <DraggableSlider showSlider={showSlider} startAmount={props.currentBlind + highestBet} choice={betRaise} lobbyName={props.lobbyName}/>
+            <BetBox showBox={showBox} startAmount={minBetRaise} choice={betRaise} lobbyName={props.lobbyName}/>
         </>
     );
-}
-
-const DraggableSlider = (props) => {
-
-    const [value, setValue] = useState(props.startAmount);
-    const [showSlider, setShowSlider] = useState(props.showSlider);
-
-    useEffect(() => {
-        setShowSlider(props.showSlider);
-    }, [props.showSlider]);
-
-    const handleValue = (event) => {
-        setValue(event.target.value);
-    }
-
-    const handleConfirm = () => {
-        // Check for wrongly inputted values
-
-        socket.emit('turnChoice', props.lobbyName, props.choice, value);
-        setShowSlider(false);
-    }
-
-    return(
-        <>
-            {
-                showSlider && (
-                    <div>
-                        <input type='text' value={value} className='slider' onChange={handleValue} 
-                        placeholder={props.startAmount} />
-                        <button className='betConfirm' onClick={handleConfirm}>{props.choice}</button>
-                    </div>
-                )
-            }
-        </>
-    )
 }
 
 export default TurnChoices;
