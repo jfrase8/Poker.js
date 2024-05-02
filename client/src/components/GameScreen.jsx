@@ -117,8 +117,11 @@ class GameScreen extends React.Component {
                 this.checkYourTurn();
             });
         });
-        socket.on('wonHand', (you) => {
-            console.log("You won: " + this.state.potAmount + this.state.opponents.currentBet);
+        socket.on('wonHand', (you, handType) => {
+            let currentBet = this.state.opponents.currentBet;
+            if (currentBet == '') currentBet = 0;
+            if (handType != null) alert("You won with " + handType);
+            else alert("You won because everyone folded");
             this.setState({communityCards: [], currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
                            actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
                 this.checkYourTurn();
@@ -130,7 +133,7 @@ class GameScreen extends React.Component {
             else shownText = you.role;
             this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: shownText, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
-                console.log("Round over, is it your turn?", this.state.isYourTurn);
+                alert("You lost this hand.");
                 this.checkYourTurn();
             });
         });
@@ -146,7 +149,7 @@ class GameScreen extends React.Component {
         socket.off('wonHand');
         socket.off('roundOver');
         socket.off('updateHand');
-        
+        socket.off('winner');
     }
 
     checkYourTurn() {

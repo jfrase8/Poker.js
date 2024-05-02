@@ -325,6 +325,55 @@ io.on("connection", (socket) => {
                 if (handSize == 7)
                 {
                     let winner = lobby.deck.findWinner(lobbyName, lobbyManager);
+                    console.log(`${winner[0].nickname} won with ${winner[1]}`);
+
+                    lobby.switchRoles();
+                    lobby.setTurns();
+                    for (let client of lobby.clients)
+                    {
+                        // This client won the hand
+                        if (client.id == winner[0].id)
+                        {
+                            if (client.currentBet == "") client.currentBet = 0;
+                            client.chipAmount += parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
+                            console.log(client.chipAmount);
+                            client.currentBet = "";
+                            
+                            // Reset blinds
+                            lobby.betBlinds();
+
+                            io.to(client.id).emit('wonHand', client, winner[1]);
+
+                            // Reset status
+                            client.status = 'ready';
+                        }
+                    }
+                    for (let client of lobby.clients)
+                    {
+                        // These clients need to update
+                        if (client.id != winner[0].id)
+                        {
+                            // Reset status
+                            client.status = 'ready';
+                            
+                            // Make sure someone who doesn't have a blind has nothing as their current bet
+                            if ((client.role == "") && client.currentBet != "") client.currentBet = "";
+
+                            io.to(client.id).emit('roundOver', client);
+                        }
+                    }
+
+                    roundOver = true;
+                    lobby.deck.resetDeck();
+
+                    // Redeal new hands and update opponents on players screens
+                    lobby.deck.dealHands(lobby.clients);
+                    for (let client of lobby.clients)
+                    {
+                        let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+                        io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
+                        io.to(client.id).emit('updateOpponents', opponents);
+                    }
                 }
                 else 
                 {

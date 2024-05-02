@@ -48,6 +48,16 @@ class DeckManager {
         let turnRiver = this.cards.pop();
         this.dealtHands.forEach(hand => { hand.cards.push(turnRiver) });
     }
+    getPlayer(id){
+        for (let hand of this.dealtHands) {
+            if (hand.player.id == id)
+            {
+                console.log("Found player");
+                return hand.player;
+            }
+                
+        }
+    }
     getPlayerHand(player) {
         for (let hand of this.dealtHands) {
             if (hand.player.id == player.id)
@@ -59,7 +69,7 @@ class DeckManager {
         }
     }
     resetDeck() {
-        this.cards = this.deckDefault;
+        this.cards = [...this.deckDefault];
         this.dealtHands = [];
         this.pot = 0;
     }
@@ -77,28 +87,32 @@ class DeckManager {
             {
                 let handType = handChecker.checkHandType(hand);
                 console.log(`${hand.player.nickname} Hand Type: `, handType);
-                madeHands[hand.player] = handType;
+                madeHands[hand.player.id] = handType;
             }
         }
-        let handType = handChecker.checkHandType(new Hand(lobby.clients[0], [new Card("spades", "ace"), new Card("spades", "king"), new Card("spades", "queen"), new Card("spades", "jack"), 
-                                                                             new Card("hearts", "9"), new Card("spades", "10"), new Card("spades", "5")]));
-        console.log("Made up hand: ", handType);
+        console.log("made Hands:", madeHands);
 
         for (let type of this.hierarchy) {
             Object.keys(madeHands).forEach(key => {
-                if (madeHands[key] == type) bestHands[key] = lobby.deck.getPlayerHand(key);
+                if (madeHands[key] == type) bestHands[key] = lobby.deck.getPlayerHand(lobby.deck.getPlayer(key));
             });
+            console.log("Best hands:",bestHands);
             let numHands = Object.keys(bestHands).length;
             // If multiple people have the same hand, compare those hands to get the best
             if (numHands > 1){
                 let tiebreakers = [];
                 Object.keys(bestHands).forEach(key => {
-                    tiebreakers.push(handChecker.getTieBreaker(handChecker, bestHands[key], madeHands[key]));
+                    let breaker = handChecker.getTieBreaker(handChecker, bestHands[key], madeHands[key]);
+                    tiebreakers.push([bestHands[key].player, breaker]);
+                    
                 });
-                handChecker.compareHands(hands, type);
+                console.log(tiebreakers);
+                let winner = handChecker.compareHands(tiebreakers, type);
+                return [winner, type];
             }
             // If anyone has a hand of this type, they win with the best hand
-            else if (numHands == 1) return [Object.keys(bestHands)[0], type];
+            console.log("Number of hands:", numHands);
+            if (numHands == 1) return [Object.values(bestHands)[0].player, type];
         }
     }
 }
@@ -273,7 +287,7 @@ class HandChecker {
             return handChecker.straightTieBreakers[hand.player.nickname];
         }
         // Flush
-        if (handType == "Flush")
+        else if (handType == "Flush")
         {
             let suitFreq = {};
             let suitToCheck = "";
@@ -293,15 +307,12 @@ class HandChecker {
             return biggestNumber;
         }
         let valueFreq = {};
-        for (let card of cards)
+        for (let card of hand.cards)
         {
             if (valueFreq[card.value]) valueFreq[card.value]++;
             else valueFreq[card.value] = 1;
         }
-        // Convert Queen, King and Jack to values
-        Object.keys(valueFreq).forEach(key => {
-
-        });
+        console.log(valueFreq);
 
         // Four of a kind
         if (handType == "Four of a Kind")
@@ -311,7 +322,7 @@ class HandChecker {
             });
         }
         // Three of a kind
-        if (handType == "Three of a Kind")
+        else if (handType == "Three of a Kind")
         {
             let biggestNum = 0;
             let aceFound = false;
@@ -325,19 +336,124 @@ class HandChecker {
                 }
                 else if (valueFreq[key] == 3)
                 {
-                    if (key == "king") key == 13;
-                    if (key == "queen") key == 12;
-                    if (key == "jack") key == 11;
+                    if (key == "king") key = 13;
+                    if (key == "queen") key = 12;
+                    if (key == "jack") key = 11;
 
-                    if (key > biggestNum) biggestNum = key;
+                    if (parseInt(key) > biggestNum) biggestNum = key;
                 } 
+            });
+            return biggestNum;
+        }
+        // Two Pair
+        else if (handType == "Two Pair") 
+        {
+            let biggestNums = [];
+            Object.keys(valueFreq).forEach(key => {
+
+                if (valueFreq[key] == 2 && key == "ace")
+                {
+                    biggestNums.push(14);
+                }
+                else if (valueFreq[key] == 2)
+                {
+                    if (key == "king") key = 13;
+                    if (key == "queen") key = 12;
+                    if (key == "jack") key = 11;
+
+                    biggestNums.push(parseInt(key));
+                }
+            });
+            biggestNums.sort((a,b) => b - a);
+            return [biggestNums[0], biggestNums[1]];
+        }
+        // One pair
+        else if (handType == "One Pair") {
+            let biggestNum = 0;
+            let aceFound = false;
+            Object.keys(valueFreq).forEach(key => {
+
+                if (aceFound){}
+                else if (valueFreq[key] == 2 && key == "ace")
+                {
+                    biggestNum == "ace";
+                    aceFound = true
+                }
+                else if (valueFreq[key] == 2)
+                {
+                    if (key == "king") key = 13;
+                    if (key == "queen") key = 12;
+                    if (key == "jack") key = 11;
+
+                    if (parseInt(key) > biggestNum) biggestNum = key;
+                } 
+            });
+            return biggestNum;
+        }
+        // High Card
+        else if (handType == "High Card"){
+            let biggestNum = 0;
+            let aceFound = false;
+            Object.keys(valueFreq).forEach(key => {
+                if (key == "king") key = 13;
+                if (key == "queen") key = 12;
+                if (key == "jack") key = 11;
+
+                if (aceFound){}
+                else if (key == "ace") {
+                    biggestNum = "ace";
+                    aceFound = true;
+                }
+                else if (parseInt(key) > biggestNum) biggestNum = key;
             });
             return biggestNum;
         }
 
     }
-    compareHands(hands, handType) {
-        
+    // Tiebreakers - [player, tiebreaker #'s]
+    compareHands(tiebreakers, handType) {
+        if (handType == "Two Pair") {
+            let highest = [null, 0];
+            let tied = [];
+            for (let tiebreaker of tiebreakers) {
+                if (tiebreaker[1][0] == "ace") tiebreaker[0] = 14
+                if (tiebreaker[1][0] == "king") tiebreaker[0] = 13
+                if (tiebreaker[1][1] == "king") tiebreaker[1] = 13
+                if (tiebreaker[1][0] == "queen") tiebreaker[0] = 12
+                if (tiebreaker[1][1] == "queen") tiebreaker[1] = 12
+                if (tiebreaker[1][0] == "jack") tiebreaker[0] = 11
+                if (tiebreaker[1][1] == "jack") tiebreaker[1] = 11
+
+                if (tiebreaker[1][0] > highest[1])
+                {
+                    highest[1] = tiebreaker[1][0];
+                    highest[0] = tiebreaker[0];
+                    tied = [[tiebreaker[0], tiebreaker[1]]];
+                } 
+                else if (tiebreaker[1][0] == highest[1]) tied.push([tiebreaker[0], tiebreaker[1]]);
+            }
+            if (tied.length > 1)
+            {
+                let biggestNum = [null, [0,0]];
+                for (let tie of tied) {
+                    if (tie[1][1] > biggestNum[1][1]) biggestNum = tie;
+                }
+                console.log("compare hands(bigNum):", biggestNum[0].nickname);
+                return biggestNum[0];
+            }
+            else {
+                console.log("compare hands(highest):",highest[0].nickname);
+                return highest[0];
+            }
+        }
+        else {
+            let highest = [null, 0]
+            for (let tiebreaker of tiebreakers) {
+                if (tiebreaker[1] > highest[1]) highest = tiebreaker;
+            }
+            console.log("compare hands(highest):", highest[0].nickname);
+            return highest[0];
+        }
     }
 }
 
