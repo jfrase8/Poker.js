@@ -5,7 +5,7 @@ import LeaveLobbyButton from "./LeaveLobbyButton";
 import { useNavigate } from "react-router-dom";
 import StartGameButton from "./StartGameButton";
 
-const DefaultWait = (props) => {
+const HostDefault = () => {
     return (
         <>
             <div className="defaultWaitMessage">Waiting for 1 more player</div>
@@ -13,7 +13,7 @@ const DefaultWait = (props) => {
     )
 };
 
-const WaitingForHost = (props) => {
+const WaitingForHost = () => {
     return (
         <>
             <div className="defaultWaitMessage">Waiting for host to start</div>
@@ -22,31 +22,27 @@ const WaitingForHost = (props) => {
 }
 
 const TotalPlayers = () => {
-    const [playerCount, setPlayerCount] = useState(() => {
-        // Retrieve the player count from session storage or default to 1
-        const storedCount = sessionStorage.getItem('playerCount');
-        return storedCount ? parseInt(storedCount, 10) : 1;
-    });
 
-    //const navigate = useNavigate();
+    const { lobbyName } = useParams();
+
+    const [playerCount, setPlayerCount] = useState(0);
 
     useEffect(() => {
+        socket.emit('getPlayerCount', lobbyName);
+
         socket.on("updatePlayerCount", (clients) => {
             setPlayerCount(clients);
         });
-
-        // Update session storage whenever the player count changes
-        sessionStorage.setItem('playerCount', playerCount.toString());
 
         return(() => {
             socket.off('updatePlayerCount');
         });
 
-    }, [playerCount]);
+    });
 
     return (
         <>
-            <div className="totalPlayers">Total Players: {playerCount}/6</div>
+            <div className="totalPlayers">Total Players: {playerCount}/5</div>
         </>
     )
 }
@@ -58,11 +54,19 @@ const WaitingScreen = () => {
     const { lobbyName } = useParams();
 
     // Use state to manage waitingObject
-    const [waitingObject, setWaitingObject] = useState(<DefaultWait totalJoined={1} />);
-
+    const [waitingObject, setWaitingObject] = useState(<WaitingForHost />);
+    
     const navigate = useNavigate(); // Access the useNavigate hook directly
 
     useEffect(() => {
+        console.log("Refreshed");
+        
+        socket.emit('checkIfHost', lobbyName);
+
+        socket.on('hostDefault', () => {
+            setWaitingObject(<HostDefault />);
+        });
+
         // Creates a start button for the host of this lobby that can start the game
         socket.on('startGameOption', () => {
             setWaitingObject(<StartGameButton name={lobbyName}/>);
@@ -71,7 +75,6 @@ const WaitingScreen = () => {
         socket.on('clientLeaveLobby', (lobby) => {
             console.log(lobby);
             setTimeout(() => navigate('/LobbyScreen'), 0);
-            
         });
 
         socket.on('gameStarted', () => {
@@ -83,8 +86,9 @@ const WaitingScreen = () => {
             socket.off('startGameOption');
             socket.off('gameStarted');
             socket.off('clientLeaveLobby');
+            socket.off('hostDefault');
         };
-    }, [navigate, lobbyName]); // Include navigate in the dependency array
+    }, []);
     return (
         <>
             <div className="lobbyNameTitle">{lobbyName}</div>

@@ -49,7 +49,14 @@ io.on("connection", (socket) => {
 
             // Have the clients still in the lobby update the amount of people in the lobby
             for (client of lobby.clients)
+            {
+                // Have host change waitingObject back to default if they're only one left in lobby
+                if (client.id == lobby.host && lobby.clients.length == 1) io.to(client.id).emit('hostDefault');
+                
                 io.to(client.id).emit('updatePlayerCount', lobby.clients.length);
+            }
+                
+
         }
     });
 
@@ -62,12 +69,18 @@ io.on("connection", (socket) => {
             // Get the lobby that was joined
             let lobby = lobbyManager.getLobby(lobbyName);
 
+            // Host
+            for (let client of lobby.clients)
+            {
+                if (client.id == lobby.host && lobby.clients.length == 1) io.to(client.id).emit('hostDefault');
+            }
+
             // Check if lobby has enough people to start
             if (lobby.clients.length == 2)
             {
                 // Get the host of lobby
                 let host = lobby.host;
-                for (client of lobby.clients)
+                for (let client of lobby.clients)
                 {
                     // If client is host, create start button
                     if (client.id === host)
@@ -76,13 +89,14 @@ io.on("connection", (socket) => {
                     }    
                     else
                     {
-                        io.to(client.id).emit('waitingForHostStart');
                         console.log(client.nickname + "joined");
                     }
-                
-                    // Have the clients still in the lobby update the amount of people in the lobby
-                    io.to(client.id).emit('updatePlayerCount', (lobby.clients.length));
                 }
+            }
+            for (let client of lobby.clients)
+            {
+                // Have the clients still in the lobby update the amount of people in the lobby
+                io.to(client.id).emit('updatePlayerCount', lobby.clients.length);
             }
         }
         else{
@@ -92,6 +106,14 @@ io.on("connection", (socket) => {
 
     socket.on("getLobbies", () => {
         io.to(socket.id).emit('refreshLobbies', lobbyManager.getAllLobbyNames());
+    });
+    socket.on('getPlayerCount', (lobbyName) => {
+        let lobby = lobbyManager.getLobby(lobbyName);
+        io.to(socket.id).emit('updatePlayerCount', lobby.clients.length);
+    });
+    socket.on('checkIfHost', (lobbyName) => {
+        let lobby = lobbyManager.getLobby(lobbyName);
+        if (lobby.host == socket.id) io.to(socket.id).emit('hostDefault');
     });
 
     socket.on('startGame', (lobbyName) => {
