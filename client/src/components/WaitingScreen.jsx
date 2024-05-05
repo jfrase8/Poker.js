@@ -78,7 +78,8 @@ const WaitingScreen = () => {
         });
 
         socket.on('gameStarted', () => {
-            navigate("/Match");
+            console.log(lobbyName);
+            navigate(`/Match/${lobbyName}`);
         });
 
         // Cleanup the socket listener when the component is unmounted

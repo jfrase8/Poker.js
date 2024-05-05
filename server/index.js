@@ -178,15 +178,20 @@ io.on("connection", (socket) => {
                 if (client.turnNumber == 1) client.role = "Small Blind";
                 else client.role = "Big Blind";
             }
-            // Get this clients cards
-            let clientHand = lobby.deck.getPlayerHand(client).cards;
-
-            // Find opponents
-            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-
-            // Send all info of players to this client
-            io.to(client.id).emit('playerInfo', clientHand, client, opponents, lobbyName);
         }
+    });
+    socket.on('grabInfo', (lobbyName) => {
+        let lobby = lobbyManager.getLobby(lobbyName);
+        let player = lobby.findClient(socket.id);
+
+        // Get this players cards
+        let playerHand = lobby.deck.getPlayerHand(player).cards;
+        // Find opponents
+        let opponents = lobby.clients.filter(_client => _client.id !== player.id);
+
+        console.log(playerHand);
+
+        io.to(socket.id).emit('playerInfo', playerHand, player, opponents, lobbyName);
     });
 
     socket.on('turnChoice', (lobbyName, choice, betAmount) => {

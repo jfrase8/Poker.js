@@ -21,13 +21,15 @@ class GameScreen extends React.Component {
             numOfBets: 0,
             role: "",
             turnChoices: [],
-            lobbyName: "",
+            lobbyName: this.props.lobbyName,
             actionChose: "",
             potAmount: 0,
             currentBlind: 20,
         }
     }
     componentDidMount() {
+        socket.emit('grabInfo', this.state.lobbyName);
+
         socket.on('playerInfo', (hand, yourInfo, opponents, lobbyName) => {
             this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
                            chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobbyName: lobbyName}, () => {
@@ -35,7 +37,7 @@ class GameScreen extends React.Component {
                             if (opponents.length > 1)
                             {
                                 // Small Blind
-                                if (this.state.yourTurnNumber == 2)
+                                if (this.state.yourTurnNumber === 2)
                                 {
                                     this.setState({role: "Small Blind", currentBet:10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
@@ -45,7 +47,7 @@ class GameScreen extends React.Component {
                                     });
                                 }
                                 // Big Blind
-                                else if (this.state.yourTurnNumber == 3)
+                                else if (this.state.yourTurnNumber === 3)
                                 {
                                     this.setState({role: "Big Blind", currentBet: 20, actionChose:"Big Blind", chipAmount: 1000-20}, () => 
                                     {
@@ -62,7 +64,7 @@ class GameScreen extends React.Component {
                             else
                             {
                                 // Small Blind
-                                if (this.state.yourTurnNumber == 1)
+                                if (this.state.yourTurnNumber === 1)
                                 {
                                     this.setState({role: "Small Blind", currentBet: 10, actionChose:"Small Blind", chipAmount: 1000-10}, () => 
                                     {
@@ -119,17 +121,17 @@ class GameScreen extends React.Component {
         });
         socket.on('wonHand', (you, handType) => {
             let currentBet = this.state.opponents.currentBet;
-            if (currentBet == '') currentBet = 0;
+            if (currentBet === '') currentBet = 0;
             if (handType != null) alert("You won with " + handType);
             else alert("You won because everyone folded");
             this.setState({communityCards: [], currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
-                           actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
+                           actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0}, () => {
                 this.checkYourTurn();
             });
         });
         socket.on('roundOver', (you) => {
             let shownText = "";
-            if (you.actionChose == "fold") shownText = "fold";
+            if (you.actionChose === "fold") shownText = "fold";
             else shownText = you.role;
             this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: shownText, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
@@ -224,11 +226,11 @@ class GameScreen extends React.Component {
             "2-1": 1,
         }
         let key = this.state.yourTurnNumber + '-' + opponentTurnNumber;
-        if (this.state.opponents.length == 4)
+        if (this.state.opponents.length === 4)
             return cssNumbersWith5[key];
-        if (this.state.opponents.length == 3)
+        if (this.state.opponents.length === 3)
             return cssNumbersWith4[key];
-        if (this.state.opponents.length == 2)
+        if (this.state.opponents.length === 2)
             return cssNumbersWith3[key];
         else
             return cssNumbersWith2[key];
@@ -257,11 +259,11 @@ class GameScreen extends React.Component {
         }
         console.log(this.state.communityCards.length);
         // It is first round of betting
-        if (this.state.communityCards.length == 0)
+        if (this.state.communityCards.length === 0)
         {
             console.log("Community cards: " + this.state.communityCards.length);
             // You are the big blind
-            if (this.state.role == "Big Blind")
+            if (this.state.role === "Big Blind")
             {
                 // Big blind is the highest bet amount
                 if (highestBet)
@@ -286,7 +288,7 @@ class GameScreen extends React.Component {
     }
 
     render() {
-        console.log(this.state.turnChoices);
+        console.log(this.state.yourHand);
         return (
             <>
                 <div className="deck"></div>

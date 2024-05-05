@@ -17,7 +17,7 @@ function App() {
       <Router basename='poker.js'>
         <Routes>
             <Route exact path="/" element={<Home />}/>
-            <Route path="/Match" element={<Match />}/>
+            <Route path="/Match/:lobbyName" element={<Match />}/>
             <Route path="/LobbyScreen" element={<LobbyScreen />}/>
             <Route path="/WaitingScreen/:lobbyName" element={<WaitingScreen />}/>
             <Route path="*" element={<Navigate to="/" />}/>
