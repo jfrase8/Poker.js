@@ -78,42 +78,32 @@ class DeckManager {
 
         let handChecker = new HandChecker();
 
-        let bestHands = {};        
-        let madeHands = {};
-
+        let _hands = []
         for (let hand of this.dealtHands)
         {
-            if (hand.player.status != 'folded')
+            // Make sure this hand hasn't folded
+            if (hand.player.status != "folded")
             {
                 let handType = handChecker.checkHandType(hand);
-                console.log(`${hand.player.nickname} Hand Type: `, handType);
-                madeHands[hand.player.id] = handType;
+                console.log(hand.player.nickname, handType);
+                let handScore = handChecker.scoreHand(handType, hand);
+                console.log("Score:", handScore);
+                _hands.push([hand, handScore, handType]);
+                
             }
         }
-        console.log("made Hands:", madeHands);
+        // Sort hands by score
+        _hands.sort((a, b) => b[1] - a[1]);
 
-        for (let type of this.hierarchy) {
-            Object.keys(madeHands).forEach(key => {
-                if (madeHands[key] == type) bestHands[key] = lobby.deck.getPlayerHand(lobby.deck.getPlayer(key));
-            });
-            console.log("Best hands:",bestHands);
-            let numHands = Object.keys(bestHands).length;
-            // If multiple people have the same hand, compare those hands to get the best
-            if (numHands > 1){
-                let tiebreakers = [];
-                Object.keys(bestHands).forEach(key => {
-                    let breaker = handChecker.getTieBreaker(handChecker, bestHands[key], madeHands[key]);
-                    tiebreakers.push([bestHands[key].player, breaker]);
-                    
-                });
-                console.log(tiebreakers);
-                let winner = handChecker.compareHands(tiebreakers, type);
-                return [winner, type];
-            }
-            // If anyone has a hand of this type, they win with the best hand
-            console.log("Number of hands:", numHands);
-            if (numHands == 1) return [Object.values(bestHands)[0].player, type];
+        let winners = [[_hands[0][0].player, _hands[0][2]]]
+        console.log(_hands[0][2])
+        let highestScore = _hands[0][1];
+        _hands.shift()
+        for (let hand of _hands) {
+            console.log(hand[1]);
+            if (hand[1] == highestScore) winners.push([hand[0].player, hand[2]]);
         }
+        return winners;
     }
 }
 
@@ -124,7 +114,6 @@ class HandChecker {
             "queen": 12,
             "jack": 11,
         }
-        this.straightTieBreakers = {}
     }
     checkHandType(hand) {
         let handHierarchy = {
@@ -184,10 +173,13 @@ class HandChecker {
         // Check full house
         if (handHierarchy["Three of a Kind"] == true && handHierarchy["One Pair"] == true)
             handHierarchy["Full House"] = true;
-
+ 
 
         // Remove aces before checking for straights
         delete valueFreq.ace;
+
+        let highestFlush = 0;
+        let highestStraight = 0;
 
         // Check for straight and flush only if the player cannot make a four of a kind or full house
         if (handHierarchy["Four of a Kind"] == false && handHierarchy["Full House"] == false)
@@ -202,9 +194,6 @@ class HandChecker {
                 straight.push(1);
                 for (let i = 0; i < handValues.length; i++)
                 {
-                    console.log("Last number added:", lastNum);
-                    console.log("Current Straight:", straight);
-
                     if (handValues[i] == lastNum+1) straight.push(handValues[i]);
                     else {
                         if (straight.length >= 5) break;
@@ -218,7 +207,7 @@ class HandChecker {
 
                 }
                 // Check ace as last value
-                if (straight[straight.length-1] == 13) straight.push("ace");
+                if (straight[straight.length-1] == 13) straight.push(14);
             }
             else {
                 for (let i = 0; i < 7; i++)
@@ -235,17 +224,15 @@ class HandChecker {
                     lastNum = handValues[i];
                 }
             }
-            console.log("Hand Values Sorted:", handValues);
-            console.log("Final Straight:", straight);
+            console.log(straight);
+
             if (straight.length >= 5)
             {
                 // Possible Royal flush if hand is also a flush
                 if (straight[straight.length-1] == "ace") nutStraight = true;
 
                 handHierarchy["Straight"] = true;
-                this.straightTieBreakers[hand.player.nickname] = straight[straight.length-1];
-                console.log(this.straightTieBreakers);
-                console.log(hand.player.nickname, "Straight: ", straight);
+                highestStraight = straight[straight.length-1];
             } 
 
             // Check for flush
@@ -255,8 +242,21 @@ class HandChecker {
                 else suitFreq[suit]++;
             });
             Object.keys(suitFreq).forEach(key => {
-                if (suitFreq[key] >= 5) handHierarchy["Flush"] = true;
-                console.log(key, ":", suitFreq[key]);
+                if (suitFreq[key] >= 5) 
+                {
+                    handHierarchy["Flush"] = true;
+                    let biggestNum = 0;
+                    hand.cards.forEach(card => {
+                        let tempVal = card.value;
+                        if (tempVal == "ace") tempVal = 14;
+                        if (tempVal == "king") tempVal = 13;
+                        if (tempVal == "queen") tempVal = 12;
+                        if (tempVal == "jack") tempVal = 11;
+
+                        if (card.suit == key && tempVal > biggestNum) biggestNum = tempVal;
+                    });
+                    highestFlush = biggestNum;
+                }
             });
 
             // Check for straight flush and royal flush
@@ -268,192 +268,139 @@ class HandChecker {
                 if (nutStraight) handHierarchy["Royal Flush"] = true;
             }
         }
-        
-        Object.keys(valueFreq).forEach(key => {
-            console.log(key, ":", valueFreq[key]);
-        });
 
         // Return the best hand type
         let keys = Object.keys(handHierarchy);
         for(let key of keys) {
-            if (handHierarchy[key] == true) return key;
+            if (handHierarchy[key] == true && key == 'Flush') return [key, highestFlush];
+            else if (handHierarchy[key] == true && key == 'Straight') return [key, highestStraight];
+            else if (handHierarchy[key] == true) return [key];
         }
 
-        return "High Card"; // If player has nothing else, will default to high card
+        return ["High Card"]; // If player has nothing else, will default to high card
     }
-    getTieBreaker(handChecker, hand, handType) {
-        // Straight
-        if (handType == "Straight" || handType == "Straight Flush" || handType == "Royal Flush"){
-            return handChecker.straightTieBreakers[hand.player.nickname];
-        }
-        // Flush
-        else if (handType == "Flush")
-        {
-            let suitFreq = {};
-            let suitToCheck = "";
-            hand.cards.forEach(card => {
-                if (suitFreq[card.suit]) suitFreq[card.suit]++;
-                else suitFreq[card.suit] = 1;
-            });
-            Object.keys(suitFreq).forEach(key => {
-                if (suitFreq[key] >= 5) suitToCheck = key;
-            });
+    scoreHand(handType, hand) {
 
-            let biggestNumber = 0;
-            for (let card of hand.cards){
-                if (card.suit == suitToCheck && card.value == "ace") return "ace";
-                else if (card.suit == suitToCheck && card.value > biggestNumber) biggestNumber = card.value;
-            }
-            return biggestNumber;
-        }
+        let handScore = 0;
+
+        // Create Hand Frequencies
         let valueFreq = {};
-        for (let card of hand.cards)
-        {
-            if (valueFreq[card.value]) valueFreq[card.value]++;
-            else valueFreq[card.value] = 1;
+        let suitFreq = {};
+        hand.cards.forEach(card => {
+            // Convert king, queen, jack, and ace to numbers
+            let tempVal = card.value;
+            if (tempVal == "ace") tempVal = 14
+            else if (tempVal == "king") tempVal = 13
+            else if (tempVal == "queen") tempVal = 12
+            else if (tempVal == "jack") tempVal = 11
+            tempVal = parseInt(tempVal);
+
+            // Value Frequencies
+            if (!valueFreq[tempVal]) valueFreq[tempVal] = 1;
+            else valueFreq[tempVal]++;
+            // Suit Frequencies
+            if (!suitFreq[card.suit]) suitFreq[card.suit] = 1;
+            else suitFreq[card.suit]++;
+        });
+
+        let leftovers = [];
+        let biggest3 = 0;
+        let biggest2 = 0;
+        switch (handType[0]) {
+            case "Royal Flush":
+                handScore = 200000;
+                break;
+            case "Four of a Kind":
+                handScore = 180000;
+                break;
+            case "Straight Flush":
+                handScore = 160000;
+                break;
+            case "Full House":
+                handScore = 140000;
+                biggest2 = 0;
+                biggest3 = 0;
+                Object.keys(valueFreq).forEach(key => {
+                    if (valueFreq[key] == 3 && key > biggest3) biggest3 = key;
+                    if (valueFreq[key] == 2 && key > biggest2) biggest2 = key; 
+                });
+                handScore += (biggest3 * 1000);
+                handScore += (biggest2 * 10);
+                break;
+            case "Flush":
+                handScore = 120000;
+                let flushCards = Object.keys(valueFreq);
+                flushCards.sort((a, b) => b - a);
+                handScore += (flushCards[0] * 1000);
+                handScore += (flushCards[1] * 10);
+                handScore += (flushCards[2] * 0.1);
+                handScore += (flushCards[3] * 0.001);
+                handScore += (flushCards[4] * 0.00001);
+                break;
+            case "Straight":
+                handScore = 100000;
+                handScore += (handType[1] * 1000);
+                break;
+            case "Three of a Kind":
+                handScore = 80000;
+                leftovers = [];
+                biggest3 = 0;
+                Object.keys(valueFreq).forEach(key => {
+                    if (valueFreq[key] == 3 && key > biggest3) biggest3 = key;
+                    if (valueFreq[key] == 1) leftovers.push(key);
+                });
+                // Sort all the leftover cards
+                leftovers.sort((a, b) => b - a);
+
+                handScore += (biggest3 * 1000);
+                handScore += (leftovers[0] * 10)
+                handScore += (leftovers[1] * 0.1)
+                break;
+            case "Two Pair":
+                handScore = 60000;
+                let pairs = [];
+                leftovers = [];
+                Object.keys(valueFreq).forEach(key => {
+                    if (valueFreq[key] == 2) pairs.push(key);
+                    if (valueFreq[key] == 1) leftovers.push(key);
+                });
+                // Sort all the pairs and leftovers
+                pairs.sort((a, b) => b - a);
+                leftovers.sort((a, b) => b - a);
+
+                handScore += (pairs[0] * 1000);
+                handScore += (pairs[1] * 10);
+                handScore += (leftovers[0] * 0.1);
+                break;
+            case "One Pair":
+                handScore = 40000;
+                let pair = 0;
+                leftovers = [];
+                Object.keys(valueFreq).forEach(key => {
+                    if (valueFreq[key] == 2) pair = key;
+                    if (valueFreq[key] == 1) leftovers.push(key);
+                });
+                // Sort all the pairs and leftovers
+                leftovers.sort((a, b) => b - a);
+
+                handScore += (pair * 1000);
+                handScore += (leftovers[0] * 10);
+                handScore += (leftovers[1] * 0.1);
+                handScore += (leftovers[2] * 0.001);
+                break;
+            case "High Card":
+                handScore = 20000;
+                let keys = Object.keys(valueFreq);
+                keys.sort((a, b) => b - a);
+                handScore += (keys[0] * 1000);
+                handScore += (keys[1] * 10);
+                handScore += (keys[2] * 0.1);
+                handScore += (keys[3] * 0.001);
+                handScore += (keys[4] * 0.00001);
+                break;
         }
-        console.log(valueFreq);
 
-        // Four of a kind
-        if (handType == "Four of a Kind")
-        {
-            Object.keys(valueFreq).forEach(key => {
-                if (valueFreq[key] == 4) return key;
-            });
-        }
-        // Three of a kind
-        else if (handType == "Three of a Kind")
-        {
-            let biggestNum = 0;
-            let aceFound = false;
-            Object.keys(valueFreq).forEach(key => {
-
-                if (aceFound){}
-                else if (valueFreq[key] == 3 && key == "ace")
-                {
-                    biggestNum == "ace";
-                    aceFound = true
-                }
-                else if (valueFreq[key] == 3)
-                {
-                    if (key == "king") key = 13;
-                    if (key == "queen") key = 12;
-                    if (key == "jack") key = 11;
-
-                    if (parseInt(key) > biggestNum) biggestNum = key;
-                } 
-            });
-            return biggestNum;
-        }
-        // Two Pair
-        else if (handType == "Two Pair") 
-        {
-            let biggestNums = [];
-            Object.keys(valueFreq).forEach(key => {
-
-                if (valueFreq[key] == 2 && key == "ace")
-                {
-                    biggestNums.push(14);
-                }
-                else if (valueFreq[key] == 2)
-                {
-                    if (key == "king") key = 13;
-                    if (key == "queen") key = 12;
-                    if (key == "jack") key = 11;
-
-                    biggestNums.push(parseInt(key));
-                }
-            });
-            biggestNums.sort((a,b) => b - a);
-            return [biggestNums[0], biggestNums[1]];
-        }
-        // One pair
-        else if (handType == "One Pair") {
-            let biggestNum = 0;
-            let aceFound = false;
-            Object.keys(valueFreq).forEach(key => {
-
-                if (aceFound){}
-                else if (valueFreq[key] == 2 && key == "ace")
-                {
-                    biggestNum == "ace";
-                    aceFound = true
-                }
-                else if (valueFreq[key] == 2)
-                {
-                    if (key == "king") key = 13;
-                    if (key == "queen") key = 12;
-                    if (key == "jack") key = 11;
-
-                    if (parseInt(key) > biggestNum) biggestNum = key;
-                } 
-            });
-            return biggestNum;
-        }
-        // High Card
-        else if (handType == "High Card"){
-            let biggestNum = 0;
-            let aceFound = false;
-            Object.keys(valueFreq).forEach(key => {
-                if (key == "king") key = 13;
-                if (key == "queen") key = 12;
-                if (key == "jack") key = 11;
-
-                if (aceFound){}
-                else if (key == "ace") {
-                    biggestNum = "ace";
-                    aceFound = true;
-                }
-                else if (parseInt(key) > biggestNum) biggestNum = key;
-            });
-            return biggestNum;
-        }
-
-    }
-    // Tiebreakers - [player, tiebreaker #'s]
-    compareHands(tiebreakers, handType) {
-        if (handType == "Two Pair") {
-            let highest = [null, 0];
-            let tied = [];
-            for (let tiebreaker of tiebreakers) {
-                if (tiebreaker[1][0] == "ace") tiebreaker[0] = 14
-                if (tiebreaker[1][0] == "king") tiebreaker[0] = 13
-                if (tiebreaker[1][1] == "king") tiebreaker[1] = 13
-                if (tiebreaker[1][0] == "queen") tiebreaker[0] = 12
-                if (tiebreaker[1][1] == "queen") tiebreaker[1] = 12
-                if (tiebreaker[1][0] == "jack") tiebreaker[0] = 11
-                if (tiebreaker[1][1] == "jack") tiebreaker[1] = 11
-
-                if (tiebreaker[1][0] > highest[1])
-                {
-                    highest[1] = tiebreaker[1][0];
-                    highest[0] = tiebreaker[0];
-                    tied = [[tiebreaker[0], tiebreaker[1]]];
-                } 
-                else if (tiebreaker[1][0] == highest[1]) tied.push([tiebreaker[0], tiebreaker[1]]);
-            }
-            if (tied.length > 1)
-            {
-                let biggestNum = [null, [0,0]];
-                for (let tie of tied) {
-                    if (tie[1][1] > biggestNum[1][1]) biggestNum = tie;
-                }
-                console.log("compare hands(bigNum):", biggestNum[0].nickname);
-                return biggestNum[0];
-            }
-            else {
-                console.log("compare hands(highest):",highest[0].nickname);
-                return highest[0];
-            }
-        }
-        else {
-            let highest = [null, 0]
-            for (let tiebreaker of tiebreakers) {
-                if (tiebreaker[1] > highest[1]) highest = tiebreaker;
-            }
-            console.log("compare hands(highest):", highest[0].nickname);
-            return highest[0];
-        }
+        return handScore;
     }
 }
 
