@@ -12,10 +12,10 @@ class Hand extends React.Component {
         };
     }
     render() {
-        console.log(this.props.cards);
+        console.log("handArea" + this.props.status);
         return(
             <>
-                <div className='handArea'>
+                <div className={"handArea"+this.props.status}>
 
                     <div className='leftOfCards'>
                         <div className='yourBet'>{`${this.props.action} ${this.props.currentBet}`}</div>

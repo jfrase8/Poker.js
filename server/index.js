@@ -252,7 +252,7 @@ io.on("connection", (socket) => {
                     io.to(client.id).emit('wonHand', client);
 
                     // Reset status
-                    client.status = 'ready';
+                    if (!client.lost) client.status = 'ready';
                 }
             }
             for (let client of lobby.clients)
@@ -261,7 +261,7 @@ io.on("connection", (socket) => {
                 if (client.status == "folded")
                 {
                     // Reset status
-                    client.status = 'ready';
+                    if (!client.lost) client.status = 'ready';
                     
                     // Make sure someone who doesn't have a blind has nothing as their current bet
                     if ((client.role == "") && client.currentBet != "") client.currentBet = "";
@@ -359,15 +359,16 @@ io.on("connection", (socket) => {
                 if (handSize == 7)
                 {
                     let winners = lobby.deck.findWinner(lobbyName, lobbyManager);
-                    console.log(winners[0]);
-                    console.log();
-                    console.log(winners[0][1]);
+
+                    let winnerIDs = [];
+
+                    lobby.switchRoles();
+                    lobby.setTurns();
+
                     if (winners.length == 1)
                     {
                         console.log(`${winners[0][0].nickname} won with ${winners[0][1][0]}`);
-
-                        lobby.switchRoles();
-                        lobby.setTurns();
+                        
                         for (let client of lobby.clients)
                         {
                             // This client won the hand
@@ -385,37 +386,91 @@ io.on("connection", (socket) => {
 
                                 // Reset status
                                 client.status = 'ready';
+                                winnerIDs.push(winners[0][0].id);
                             }
                         }
-                        for (let client of lobby.clients)
-                        {
-                            // These clients need to update
-                            if (client.id != winners[0][0].id)
-                            {
-                                // Reset status
-                                client.status = 'ready';
-                                
-                                // Make sure someone who doesn't have a blind has nothing as their current bet
-                                if ((client.role == "") && client.currentBet != "") client.currentBet = "";
+                    }
+                    // Split pot
+                    else {
+                        let pot = parseInt(lobby.deck.pot) + parseInt(totalCurrentBet);
+                        let extraChips = pot % winners.length;
+                        
+                        lobby.deck.pot -= extraChips;
+                        let splitAmount = pot / winners.length;
 
-                                io.to(client.id).emit('roundOver', client);
+                        for (let winner of winners)
+                        {
+                            if (winner[0].currentBet == "") winner[0].currentBet = 0;
+                            winner[0].chipAmount += splitAmount + parseInt(winner[0].currentBet);
+                            client.currentBet = "";
+                            
+                            // Reset blinds
+                            lobby.betBlinds();
+
+                            io.to(client.id).emit('wonHand', client, winner[1][0]);
+
+                            // Reset status
+                            client.status = 'ready';
+
+                            winnerIDs.push(winner[0].id);
+                        }
+                    }
+
+                    for (let client of lobby.clients)
+                    {
+                        // These clients need to update
+                        if (!winnerIDs.includes(client.id))
+                        {
+                            // Reset status
+                            if (!client.lost) client.status = 'ready';
+                            
+                            // Make sure someone who doesn't have a blind has nothing as their current bet
+                            if ((client.role == "") && client.currentBet != "") client.currentBet = "";
+
+                            io.to(client.id).emit('roundOver', client);
+                        }
+                    }
+
+                    roundOver = true;
+                    lobby.deck.resetDeck();
+
+                    // Redeal new hands and update opponents on players screens
+                    lobby.deck.dealHands(lobby.clients);
+                    for (let client of lobby.clients)
+                    {
+                        let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+                        io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
+                        io.to(client.id).emit('updateOpponents', opponents);
+                    }
+
+
+                    // Check if players have no more chips
+                    for (let client of lobby.clients){
+                        if (client.chipAmount <= 0){
+                            // Send message to client that they lost, then they enter spectate mode
+                            client.lost = true;
+                            client.status = "folded";
+                            io.to(client.id).emit('lostGame');
+                        }
+                    }
+
+                    // Check how many players have lost
+                    let lostCount = 0;
+                    for (let client of lobby.clients){
+                        if (client.lost){
+                            lostCount++;
+                        }
+                    }
+                    if (lostCount == lobby.clients.count - 1)
+                    {
+                        // Find the person who won
+                        for (let client of lobby.clients){
+                            if (!client.lost){
+                                console.log(client.nickname, "won!");
+                                io.to(client.id).emit('wonGame');
                             }
                         }
-
-                        roundOver = true;
-                        lobby.deck.resetDeck();
-
-                        // Redeal new hands and update opponents on players screens
-                        lobby.deck.dealHands(lobby.clients);
-                        for (let client of lobby.clients)
-                        {
-                            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                            io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
-                            io.to(client.id).emit('updateOpponents', opponents);
-                        }
-                    } 
-
-                    
+                    }
                 }
                 else 
                 {

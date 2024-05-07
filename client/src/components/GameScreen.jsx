@@ -25,6 +25,7 @@ class GameScreen extends React.Component {
             actionChose: "",
             potAmount: 0,
             currentBlind: 20,
+            status: "In",
         }
     }
     componentDidMount() {
@@ -92,8 +93,6 @@ class GameScreen extends React.Component {
         socket.on('nextTurn', (you, opponents, choice) => {
             this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice}, () => {
                 this.checkYourTurn();
-                console.log("Opponents: " + this.state.opponents[0].actionChose);
-                console.log("You: " + this.state.actionChose);
             });
         });
         socket.on('updateOpponents', (opponents) => {
@@ -142,6 +141,13 @@ class GameScreen extends React.Component {
         socket.on('updateHand', (yourHand) => {
             this.setState({yourHand: yourHand});
         });
+        socket.on('lostGame', () => {
+            this.setState({status: "Lost"});
+            alert("You lost. You can now spectate.");
+        });
+        socket.on('wonGame', () => {
+            alert("You won!");
+        });
     }
     componentWillUnmount() {
         // Remove event listeners when the component unmounts
@@ -152,20 +158,18 @@ class GameScreen extends React.Component {
         socket.off('roundOver');
         socket.off('updateHand');
         socket.off('winner');
+        socket.off('lostGame');
+        socket.off('wonGame');
     }
 
     checkYourTurn() {
-        console.log("checking turn");
         // Check if its your turn
         if (this.state.isYourTurn)
         {
-            console.log("Is your turn");
-            console.log("# of bets: ", this.state.numOfBets);
             this.setState({turnChoices: this.determineTurnChoices()});
             this.setState({numOfBets: this.state.numOfBets+1});
         }
         else {
-            console.log("Not your turn");
             this.setState({turnChoices: []});
         }
     }
@@ -237,9 +241,6 @@ class GameScreen extends React.Component {
     }
 
     determineTurnChoices(){
-
-        console.log("Determining Choices");
-        console.log("# of bets: ", this.state.numOfBets);
         // Check if this isn't the first time you have bet this round
         if (this.state.numOfBets > 0)
             return ["call", "raise", "fold"];
@@ -248,20 +249,15 @@ class GameScreen extends React.Component {
         let highestBet = true;  
         for (let opponent of this.state.opponents)
         {
-            console.log(opponent);
             if (this.state.currentBet < opponent.currentBet)
             {
-                console.log(this.state.currentBet, opponent.currentBet);
                 highestBet = false;
-                console.log("happened");
             }
                 
         }
-        console.log(this.state.communityCards.length);
         // It is first round of betting
         if (this.state.communityCards.length === 0)
         {
-            console.log("Community cards: " + this.state.communityCards.length);
             // You are the big blind
             if (this.state.role === "Big Blind")
             {
@@ -278,7 +274,6 @@ class GameScreen extends React.Component {
         // It is after the flop
         else
         {
-            console.log(highestBet);
             if (highestBet)
                 return ["check", "bet", "fold"];
             // Someone else has bet
@@ -288,15 +283,16 @@ class GameScreen extends React.Component {
     }
 
     render() {
-        console.log(this.state.yourHand);
+        console.log(this.state.status);
         return (
             <>
                 <div className="deck"></div>
                 <CommunityCards cards={this.state.communityCards}/>
                 <div className="communityCards"></div>
+
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
-                             action={this.state.actionChose} currentBlind={this.state.currentBlind} />
+                             action={this.state.actionChose} currentBlind={this.state.currentBlind} status={this.state.status}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 

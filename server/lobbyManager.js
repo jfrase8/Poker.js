@@ -11,6 +11,7 @@ class Client {
         this.status = 'ready';
         this.actionChose = "";
         this.role = "";
+        this.lost = false;
     }
 }
 
@@ -76,14 +77,25 @@ class Lobby
                 {
                     if (this.clients[i].role == roles[r])
                     {
-                        // Make sure not to go out of bounds
                         let roleswitch = i + 1;
-                        if (roleswitch == clientsCount)
-                            roleswitch = 0;
+                        // Check if this client is still in the game
+                        while (true)
+                        {
+                            // Make sure not to go out of bounds
+                            if (roleswitch == clientsCount)
+                                roleswitch = 0;
 
-                        this.clients[roleswitch].role = this.clients[i].role;
-                        this.clients[i].role = "";
-
+                            if (this.clients[roleswitch].lost)
+                                roleswitch++;
+                            else {
+                                if (this.clients[roleswitch].role !== "Big Blind")
+                                {
+                                    this.clients[roleswitch].role = this.clients[i].role;
+                                    this.clients[i].role = "";
+                                }
+                                break;
+                            }
+                        }
                         // Break so role doesn't get switched multiple times
                         break;
                     }
