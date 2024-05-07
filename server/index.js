@@ -362,9 +362,6 @@ io.on("connection", (socket) => {
 
                     let winnerIDs = [];
 
-                    lobby.switchRoles();
-                    lobby.setTurns();
-
                     if (winners.length == 1)
                     {
                         console.log(`${winners[0][0].nickname} won with ${winners[0][1][0]}`);
@@ -378,11 +375,6 @@ io.on("connection", (socket) => {
                                 client.chipAmount += parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
                                 console.log(client.chipAmount);
                                 client.currentBet = "";
-                                
-                                // Reset blinds
-                                lobby.betBlinds();
-
-                                io.to(client.id).emit('wonHand', client, winners[0][1][0]);
 
                                 // Reset status
                                 client.status = 'ready';
@@ -403,9 +395,6 @@ io.on("connection", (socket) => {
                             if (winner[0].currentBet == "") winner[0].currentBet = 0;
                             winner[0].chipAmount += splitAmount + parseInt(winner[0].currentBet);
                             client.currentBet = "";
-                            
-                            // Reset blinds
-                            lobby.betBlinds();
 
                             io.to(client.id).emit('wonHand', client, winner[1][0]);
 
@@ -415,6 +404,20 @@ io.on("connection", (socket) => {
                             winnerIDs.push(winner[0].id);
                         }
                     }
+
+                    // Check if players have no more chips
+                    for (let client of lobby.clients){
+                        if (client.chipAmount <= 0){
+                            // Send message to client that they lost, then they enter spectate mode
+                            client.lost = true;
+                            client.status = "folded";
+                            io.to(client.id).emit('lostGame');
+                        }
+                    }
+
+                    lobby.switchRoles();
+                    lobby.setTurns();
+                    lobby.betBlinds();
 
                     for (let client of lobby.clients)
                     {
@@ -429,6 +432,9 @@ io.on("connection", (socket) => {
 
                             io.to(client.id).emit('roundOver', client);
                         }
+                        else {
+                            io.to(client.id).emit('wonHand', client, winners[0][1][0]);
+                        }
                     }
 
                     roundOver = true;
@@ -441,17 +447,6 @@ io.on("connection", (socket) => {
                         let opponents = lobby.clients.filter(_client => _client.id !== client.id);
                         io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
                         io.to(client.id).emit('updateOpponents', opponents);
-                    }
-
-
-                    // Check if players have no more chips
-                    for (let client of lobby.clients){
-                        if (client.chipAmount <= 0){
-                            // Send message to client that they lost, then they enter spectate mode
-                            client.lost = true;
-                            client.status = "folded";
-                            io.to(client.id).emit('lostGame');
-                        }
                     }
 
                     // Check how many players have lost

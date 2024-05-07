@@ -296,7 +296,7 @@ class GameScreen extends React.Component {
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
-                              currentBet={opponent.currentBet} currentAction={opponent.actionChose}/>
+                              currentBet={opponent.currentBet} currentAction={opponent.actionChose} status={opponent.lost}/>
                 ))}
                 <Pot potAmount={this.state.potAmount}/>
 

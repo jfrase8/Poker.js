@@ -6,10 +6,10 @@ const Opponent = (props) => {
     if (props.isYourTurn)
         chooseColor = "opponentsTurn";
 
-    // 
+    console.log(`${props.status}`);
     return(
         <>
-            <div className={`opponent opponent${props.cssOrderNum} ${chooseColor}`}>
+            <div className={`opponent opponent${props.cssOrderNum} ${chooseColor} ${props.status}`}>
                 <div className='opponentInfo'>
                     <div className='yourName'>{props.name}</div>
                     <div className='chipAmount'>{"Chips: " + props.chipAmount}</div>
