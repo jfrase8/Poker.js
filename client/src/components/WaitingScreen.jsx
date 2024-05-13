@@ -59,8 +59,6 @@ const WaitingScreen = () => {
     const navigate = useNavigate(); // Access the useNavigate hook directly
 
     useEffect(() => {
-        console.log("Refreshed");
-        
         socket.emit('checkIfHost', lobbyName);
 
         socket.on('hostDefault', () => {
@@ -73,12 +71,10 @@ const WaitingScreen = () => {
         });
 
         socket.on('clientLeaveLobby', (lobby) => {
-            console.log(lobby);
             setTimeout(() => navigate('/LobbyScreen'), 0);
         });
 
         socket.on('gameStarted', () => {
-            console.log(lobbyName);
             navigate(`/Match/${lobbyName}`);
         });
 

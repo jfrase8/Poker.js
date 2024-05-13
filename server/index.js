@@ -5,6 +5,20 @@ const app      = express();
 const server   = require('http').createServer(app);
 const io       = require('socket.io')(server, { path: `/poker.js/server/socket.io` });
 
+function emitToLobby(lobby, event, getOpponents, ...args) {
+    for (const client of lobby.clients)
+    {
+        if (getOpponents){
+            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+            io.to(client.id).emit(event, opponents, ...args);
+        }
+        else {
+            io.to(client.id).emit(event, ...args);
+        }
+        
+    }
+}
+
 io.on("connection", (socket) => {
     console.log("client in");
     socket.on("createLobby", (lobbyName) => {
@@ -48,7 +62,7 @@ io.on("connection", (socket) => {
             io.to(socket.id).emit('clientLeaveLobby', lobby);
 
             // Have the clients still in the lobby update the amount of people in the lobby
-            for (client of lobby.clients)
+            for (let client of lobby.clients)
             {
                 // Have host change waitingObject back to default if they're only one left in lobby
                 if (client.id == lobby.host && lobby.clients.length == 1) io.to(client.id).emit('hostDefault');
@@ -93,11 +107,7 @@ io.on("connection", (socket) => {
                     }
                 }
             }
-            for (let client of lobby.clients)
-            {
-                // Have the clients still in the lobby update the amount of people in the lobby
-                io.to(client.id).emit('updatePlayerCount', lobby.clients.length);
-            }
+            emitToLobby(lobby, 'updatePlayerCount', false, lobby.clients.length);
         }
         else{
             io.to(socket.id).emit('lobbyJoinFailed', lobbyName, joinLobby["reason"]);
@@ -191,7 +201,11 @@ io.on("connection", (socket) => {
 
         console.log(playerHand);
 
-        io.to(socket.id).emit('playerInfo', playerHand, player, opponents, lobbyName);
+        // Check if player has already called for their info
+        if (!player.infoGrabbed){
+            player.infoGrabbed = true;
+            io.to(socket.id).emit('playerInfo', playerHand, player, opponents, lobbyName);
+        }
     });
 
     socket.on('turnChoice', (lobbyName, choice, betAmount) => {
@@ -280,7 +294,7 @@ io.on("connection", (socket) => {
             for (let client of lobby.clients)
             {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
+                io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
                 io.to(client.id).emit('updateOpponents', opponents);
             }
                 
@@ -305,18 +319,14 @@ io.on("connection", (socket) => {
             {
                 // If player raised, all other players now get another turn, unless they folded
                 for (let client of lobby.clients)
-                {
-                    if (client.id != player.id, client.status != "folded")
-                        client.status = 'ready';
-                }
+                    if (client.id != player.id && client.status != "folded") client.status = 'ready';
 
                 // Calculate added on amount and subtract that from players chips
                 let addedBet = betAmount - player.currentBet;
                 player.currentBet = betAmount;
                 player.chipAmount -= addedBet;
 
-                console.log("Player current bet:", player.currentBet);
-                console.log("Player chip total:", player.chipAmount);
+                console.log(player.status);
             }
     
             if (choice == 'call')
@@ -414,6 +424,23 @@ io.on("connection", (socket) => {
                             io.to(client.id).emit('lostGame');
                         }
                     }
+                    // Check how many players have lost
+                    let lostCount = 0;
+                    for (let client of lobby.clients){
+                        if (client.lost){
+                            lostCount++;
+                        }
+                    }
+                    if (lostCount == lobby.clients.count - 1)
+                    {
+                        // Find the person who won
+                        for (let client of lobby.clients){
+                            if (!client.lost){
+                                console.log(client.nickname, "won!");
+                                io.to(client.id).emit('wonGame');
+                            }
+                        }
+                    }
 
                     lobby.switchRoles();
                     lobby.setTurns();
@@ -445,26 +472,8 @@ io.on("connection", (socket) => {
                     for (let client of lobby.clients)
                     {
                         let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                        io.to(client.id).emit('updateHand', (lobby.deck.getPlayerHand(client).cards));
+                        io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
                         io.to(client.id).emit('updateOpponents', opponents);
-                    }
-
-                    // Check how many players have lost
-                    let lostCount = 0;
-                    for (let client of lobby.clients){
-                        if (client.lost){
-                            lostCount++;
-                        }
-                    }
-                    if (lostCount == lobby.clients.count - 1)
-                    {
-                        // Find the person who won
-                        for (let client of lobby.clients){
-                            if (!client.lost){
-                                console.log(client.nickname, "won!");
-                                io.to(client.id).emit('wonGame');
-                            }
-                        }
                     }
                 }
                 else 
@@ -552,7 +561,6 @@ io.on("connection", (socket) => {
                 }
     
                 lobby.clients[nextPlayer-1].isYourTurn = true;
-    
                 for (let client of lobby.clients)
                 {
                     // Get opponents
@@ -579,6 +587,8 @@ io.on("connection", (socket) => {
         client.currentBet = currentBet;
         client.chipAmount -= client.currentBet;
 
+        console.log(client.nickname, client.chipAmount);
+
         // Update their chosen action
         client.actionChose = action;
 
@@ -599,7 +609,8 @@ io.on("connection", (socket) => {
 
         let highestBet = 0;
         for (let client of lobby.clients){
-            if (client.currentBet > highestBet) highestBet = client.currentBet;
+            if (typeof client.currentBet !== '')
+                if (parseInt(client.currentBet) > highestBet) highestBet = parseInt(client.currentBet);
         }
         io.to(socket.id).emit('returnHighestBet', highestBet);
     });

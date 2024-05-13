@@ -10,6 +10,7 @@ class GameScreen extends React.Component {
     {
         super(props);
         this.state = {
+            infoGrabbed: false,
             yourHand: [],
             yourTurnNumber: 1,
             yourName: "",
@@ -31,9 +32,12 @@ class GameScreen extends React.Component {
     componentDidMount() {
         socket.emit('grabInfo', this.state.lobbyName);
 
+
         socket.on('playerInfo', (hand, yourInfo, opponents, lobbyName) => {
             this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
                            chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobbyName: lobbyName}, () => {
+                            
+                            console.log("Player info called");
                             // Set your roll for a 3+ player game
                             if (opponents.length > 1)
                             {
@@ -71,7 +75,6 @@ class GameScreen extends React.Component {
                                     {
                                         this.checkYourTurn();
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
-                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                                 // Big Blind
@@ -81,7 +84,6 @@ class GameScreen extends React.Component {
                                     {
                                         this.checkYourTurn()
                                         socket.emit('updateCurrentBet', this.state.lobbyName, this.state.currentBet, this.state.actionChose);
-                                        socket.emit('updateRole', this.state.role);
                                     });
                                 }
                             }
@@ -96,7 +98,9 @@ class GameScreen extends React.Component {
             });
         });
         socket.on('updateOpponents', (opponents) => {
-            this.setState({opponents: opponents});
+            this.setState({opponents: opponents}, () => {
+                this.checkYourTurn();
+            });
         });
         socket.on('nextRound', (yourHand, you, opponents, pot) => {
             let cardsToAdd = [];
@@ -241,6 +245,19 @@ class GameScreen extends React.Component {
     }
 
     determineTurnChoices(){
+        // Check if you are able to raise what the last person bet
+        for (let opponent of this.state.opponents)
+        {
+            let totalChips = this.state.currentBet !== "" ? this.state.chipAmount + parseInt(this.state.currentBet): this.state.chipAmount;
+            console.log("Total chips:", totalChips);
+            console.log("Opponent Bet:", opponent.currentBet);
+            if (totalChips <= opponent.currentBet)
+            {
+                return ["call", "fold"];
+            }
+                
+        }
+
         // Check if this isn't the first time you have bet this round
         if (this.state.numOfBets > 0)
             return ["call", "raise", "fold"];
@@ -283,7 +300,6 @@ class GameScreen extends React.Component {
     }
 
     render() {
-        console.log(this.state.status);
         return (
             <>
                 <div className="deck"></div>
@@ -292,7 +308,8 @@ class GameScreen extends React.Component {
 
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
                              yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
-                             action={this.state.actionChose} currentBlind={this.state.currentBlind} status={this.state.status}/>
+                             action={this.state.actionChose} currentBlind={this.state.currentBlind} status={this.state.status} 
+                             currentChips={this.state.currentBet !== "" ? this.state.chipAmount + parseInt(this.state.currentBet): this.state.chipAmount}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 

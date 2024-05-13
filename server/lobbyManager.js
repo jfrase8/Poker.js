@@ -12,6 +12,7 @@ class Client {
         this.actionChose = "";
         this.role = "";
         this.lost = false;
+        this.infoGrabbed = false;
     }
 }
 

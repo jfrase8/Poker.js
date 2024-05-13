@@ -10,16 +10,14 @@ const TurnChoices = (props) => {
 
     useEffect(() => {
         socket.on('returnHighestBet', (_highestBet) => {
-            console.log("highest bet: ", _highestBet);
-            setMinBetRaise(props.currentBlind + _highestBet);
+            setMinBetRaise(parseInt(props.currentBlind) + _highestBet);
         });
         return () => {
             socket.off('returnHighestBet');
         };
-    }, []);
+    }, [showBox]);
 
     const sendChoice = (choice) => {
-        console.log(choice);
         if (choice == 'bet' || choice == 'raise')
         {
             // Create bet/raise popup
@@ -32,12 +30,20 @@ const TurnChoices = (props) => {
                 // Get the highest current bet from the server
                 socket.emit('getHighestBet', props.lobbyName);
             }
-            else setBetRaise('bet');
+            else {
+                setBetRaise('bet');
+                setMinBetRaise(props.currentBlind);
+            }
         }
         else 
         {
-            socket.emit('turnChoice', props.lobbyName, choice);
+            setShowBox(false);
+            socket.emit('turnChoice', props.lobbyName, choice); 
         }
+    };
+
+    const updateShowBox = (newValue) => {
+        setShowBox(newValue);
     };
 
     return(
@@ -47,7 +53,7 @@ const TurnChoices = (props) => {
                     {choice}
                 </button>
             ))}
-            <BetBox showBox={showBox} startAmount={minBetRaise} choice={betRaise} lobbyName={props.lobbyName}/>
+            <BetBox showBox={showBox} updateShowBox={updateShowBox} startAmount={minBetRaise} choice={betRaise} lobbyName={props.lobbyName} currentChips={props.currentChips}/>
         </>
     );
 }

@@ -12,7 +12,6 @@ class Hand extends React.Component {
         };
     }
     render() {
-        console.log("handArea" + this.props.status);
         return(
             <>
                 <div className={"handArea"+this.props.status}>
@@ -26,7 +25,7 @@ class Hand extends React.Component {
                         {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
                     </div>
                     <div className='rightOfCards'>
-                        <TurnChoices lobbyName={this.props.lobbyName} choices={this.props.choices} currentBlind={this.props.currentBlind}/>
+                        <TurnChoices lobbyName={this.props.lobbyName} choices={this.props.choices} currentBlind={this.props.currentBlind} currentChips={this.props.currentChips}/>
                     </div>
                 </div>
             </>
