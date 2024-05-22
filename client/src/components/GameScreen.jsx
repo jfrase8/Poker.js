@@ -4,6 +4,7 @@ import socket from "../socket.js";
 import Opponent from "./Opponent.jsx";
 import Pot from "./Pot.jsx";
 import CommunityCards from "./CommunityCards.jsx";
+import ContinueScreen from "./ContinueScreen.jsx";
 
 class GameScreen extends React.Component {
     constructor(props)
@@ -14,6 +15,7 @@ class GameScreen extends React.Component {
             yourHand: [],
             yourTurnNumber: 1,
             yourName: "",
+            yourColor: "",
             opponents: [],
             isYourTurn: false,
             chipAmount: 0,
@@ -27,6 +29,8 @@ class GameScreen extends React.Component {
             potAmount: 0,
             currentBlind: 20,
             status: "In",
+            showContinue: false,
+            continueMessage: "",
         }
     }
     componentDidMount() {
@@ -34,7 +38,8 @@ class GameScreen extends React.Component {
 
 
         socket.on('playerInfo', (hand, yourInfo, opponents, lobbyName) => {
-            this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, 
+            console.log(yourInfo);
+            this.setState({yourHand: hand, yourTurnNumber: yourInfo.turnNumber, yourName: yourInfo.nickname, yourColor: yourInfo.color,
                            chipAmount: yourInfo.chipAmount, currentBet: yourInfo.currentBet, isYourTurn: yourInfo.isYourTurn, lobbyName: lobbyName}, () => {
                             
                             console.log("Player info called");
@@ -299,7 +304,12 @@ class GameScreen extends React.Component {
         }
     }
 
+    toggleContinue(){
+        this.setState({showContinue: !this.state.showContinue});
+    }
+
     render() {
+        console.log(this.state.yourColor);
         return (
             <>
                 <div className="deck"></div>
@@ -307,16 +317,16 @@ class GameScreen extends React.Component {
                 <div className="communityCards"></div>
 
                 <Hand cards={this.state.yourHand} isYourTurn={this.state.isYourTurn} chipAmount={this.state.chipAmount} 
-                             yourName={this.state.yourName} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
+                             yourName={this.state.yourName} yourColor={this.state.yourColor} choices={this.state.turnChoices} lobbyName={this.state.lobbyName} currentBet={this.state.currentBet}
                              action={this.state.actionChose} currentBlind={this.state.currentBlind} status={this.state.status} 
                              currentChips={this.state.currentBet !== "" ? this.state.chipAmount + parseInt(this.state.currentBet): this.state.chipAmount}/>
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
-                              currentBet={opponent.currentBet} currentAction={opponent.actionChose} status={opponent.lost}/>
+                              currentBet={opponent.currentBet} currentAction={opponent.actionChose} status={opponent.lost} color={opponent.color}/>
                 ))}
                 <Pot potAmount={this.state.potAmount}/>
-
+                <ContinueScreen show={this.state.showContinue} message={this.state.continueMessage} onClose={this.toggleContinue}/>
             </>
         )
     }

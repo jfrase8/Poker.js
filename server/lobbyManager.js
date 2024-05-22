@@ -1,9 +1,10 @@
 const {DeckManager} = require("./DeckManager");
 
 class Client {
-    constructor(id, nickname){
-        this.id = id;
-        this.nickname = nickname;
+    constructor(_id, _nickname, _color){
+        this.id = _id;
+        this.nickname = _nickname;
+        this.color = _color;
         this.turnNumber = 0;
         this.isYourTurn = false;
         this.chipAmount = 1000;
@@ -24,12 +25,13 @@ class Lobby
         this.clients = [];
         this.deck = new DeckManager();
         this.locked = false;
-        this.playerNames = ["Milo", "Joel", "Steve", "Hossain", "Matthew", "Dylan", "Zach", "Jesse", "Seth"];
+        this.playerNames = ["Big Bob", "Snormoo Beanieborn", "Peabs Droopyeye", "Buzzy Woolham", "Fatcan Oinkbrain", "Binroid Doodoosniffer", "Eggbert", "Wumbus", "Darth Paul"];
+        this.colors = ["#ff8ba1", "#ffb943", "#00b98f", "#9a70ff", "#fff700", "#0092ff", "#7e571c"];
         this.currentBlinds = [10, 20];
     }
 
     addClient(clientID){
-        this.clients.push(new Client(clientID, this.chooseRandomName()));
+        this.clients.push(new Client(clientID, this.chooseRandomName(), this.chooseRandomColor()));
     }
 
     removeClient(client){
@@ -61,6 +63,18 @@ class Lobby
         this.playerNames.splice(randomIndex, 1);
 
         return randomName;
+    }
+    chooseRandomColor(){
+        // Generate a random index
+        const randomIndex = Math.floor(Math.random() * this.colors.length);
+
+        // Retrieve the element at the random index
+        const randomColor = this.colors[randomIndex];
+
+        // Remove the element from the array
+        this.colors.splice(randomIndex, 1);
+
+        return randomColor;
     }
 
     switchRoles() {

@@ -76,8 +76,13 @@ const LobbyScreen = () => {
     return (
         <>
             <div className="lobbyScreen">
-                <input type="text" value={inputValue} onChange={handleInputChange}></input>
+                <div className='enterLobbyName'>
+                    <p className='enterLobbyNameText'>{"Enter Lobby Name:"}</p>
+                    <input className='lobbyNameTextBox' type="text" value={inputValue} onChange={handleInputChange}></input>
+                </div>
                 <button className="createLobby" onClick={() => createLobby(inputValue)}>Create Lobby</button>
+                <div className='spaceBreak'></div>
+                <p className='openLobbiesText'>{"Open Lobbies"}</p>
                 {lobbies.map((lobby, index) => (
                     <button className="newlobbies" onClick={() => joinLobby(lobby.name)}  key={index}>
                         {lobby.name}

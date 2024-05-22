@@ -11,7 +11,7 @@ const Opponent = (props) => {
         <>
             <div className={`opponent opponent${props.cssOrderNum} ${chooseColor} ${props.status}`}>
                 <div className='opponentInfo'>
-                    <div className='yourName'>{props.name}</div>
+                    <div className='yourName' style={{backgroundColor: props.color}}>{props.name}</div>
                     <div className='chipAmount'>{"Chips: " + props.chipAmount}</div>
                     <div className='opponentCardArea'>
                         <div className='opponentCard'></div>

@@ -42,7 +42,7 @@ const TotalPlayers = () => {
 
     return (
         <>
-            <div className="totalPlayers">Total Players: {playerCount}/5</div>
+            <div className="totalPlayers">{playerCount}/5</div>
         </>
     )
 }
@@ -88,10 +88,13 @@ const WaitingScreen = () => {
     }, []);
     return (
         <>
-            <div className="lobbyNameTitle">{lobbyName}</div>
-            {waitingObject}
-            {<TotalPlayers />}
-            <LeaveLobbyButton name={lobbyName}/>
+            <div className="waitingScreen">
+                <div className="lobbyNameTitle"><div className="lobbyNameDisplay">{lobbyName}</div> ǀ {<TotalPlayers />}</div>
+                <div className="spaceBreak"></div>
+                {waitingObject}
+                <div className="spaceBreak"></div>
+                <LeaveLobbyButton name={lobbyName}/>
+            </div>
         </>
     );
 }

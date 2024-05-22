@@ -124,7 +124,7 @@ body{
   justify-content: center;
   box-sizing: border-box;
   gap: 3%;
-  border: 3px solid black;
+  border: 2px solid black; /* Inner border */
   background-color: rgba(186, 186, 186, 0.5);
 }
 .handAreaLost {
@@ -139,7 +139,7 @@ body{
   justify-content: center;
   box-sizing: border-box;
   gap: 3%;
-  border: 3px solid black;
+  border: 2px solid black; /* Inner border */
   background-color: rgba(186, 186, 186, 0.5);
   opacity: 0.5; /* Decrease opacity to 50% */
 }
@@ -195,7 +195,7 @@ body{
   padding: 4px;
   background-color: transparent;
   display: flex;
-  flex-direction: column-reverse; 
+  flex-direction: column; 
   align-items: center;
   overflow: auto;
   gap: 3px;
@@ -203,18 +203,42 @@ body{
 
 .createLobby {
   border-radius: 15px;
-  border: 3px solid #798478;
+  border: 3px solid #000000;
   padding: 20px; 
   width: 39vw;
-  height: 20vh;
+  height: 15vh;
   color: #312F2F;
-  background-color: #F7F9F9;
+  background-color: #eba014;
   font-size: 50px;
   align-items: center;
   flex-wrap: nowrap;
   cursor: pointer;
 }
-
+.createLobby:hover {
+  background-color: #da9413;
+}
+.enterLobbyName {
+  display: flex;
+  align-items: center;
+  width: 39vw;
+  height: 6vh;
+  gap: 0.5vw;
+  cursor: default;
+}
+.enterLobbyNameText {
+  background-color: #798478;
+  width: 15.5vw;
+  height: 5vh;
+  text-align: center;
+  font-size: 200%;
+  border: 2px solid black;
+  box-sizing: border-box;
+}
+.lobbyNameTextBox {
+  width: 23vw;
+  height: 4.5vh;
+  font-size: 150%;
+}
 .newlobbies {
   border-radius: 15px;
   border: 3px solid #798478;
@@ -224,21 +248,74 @@ body{
   color: #312F2F;
   background-color: #F7F9F9;
   font-size: 40px;
-  display: flex;
-  align-items: center;
   cursor: pointer;
+  text-align: center;
+}
+.newlobbies:hover {
+  background-color: #d1d1d1;
+}
+.spaceBreak {
+  height: 4vh;
+}
+.openLobbiesText {
+  background-color: #798478;
+  width: 39vw;
+  height: 5vh;
+  text-align: center;
+  font-size: 200%;
+  border: 2px solid black;
+  box-sizing: border-box;
+  cursor: default;
 }
 
+.waitingScreen {
+  width: fit-content;
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+}
 .defaultWaitMessage {
   color: white;
-  font-size: x-large;
+  font-size: 400%;
+  text-align: center;
 }
-
 .lobbyNameTitle {
-  margin-top: 0px;
   color: white;
   font-size: 10vh;
   text-align: center;
+  width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 8px solid white;
+  padding: 0px 10%;
+}
+.totalPlayers {
+  color: black;
+  font-size: 75%;
+}
+.leaveLobby {
+  width: 10vw;
+  height: 5vh;
+  text-align: center;
+  font-size: 150%;
+  cursor: pointer;
+}
+.startGame {
+  width: 10vw;
+  height: 5vh;
+  text-align: center;
+  font-size: 150%;
+  cursor: pointer;
+  background-color: #eba014;
+}
+.startGame:hover {
+  background-color: #d69212;
+}
+.lobbyNameDisplay {
+  white-space: nowrap;
+  color: #eba014;
+  font-size: 75%;
 }
 
 /*opponents setup*/
@@ -258,7 +335,6 @@ body{
   flex-flow: column nowrap;
   width: 70%;
   height: 100%;
-  gap: 3%;
   border: 2px solid black;
 }
 .opponentCardArea {
@@ -305,10 +381,18 @@ body{
 .opponentsTurn { border: 5px solid lightgreen; }
 .notOpponentsTurn { border: 5px solid red; }
 
+.yourTurn {
+  outline: 5px solid lightgreen;
+}
+.notYourTurn {
+  outline: 5px solid red;
+}
+
+
 .true {opacity: 0.5;}
 
 .chipAmount { color: white; text-align: center; font-size: 150%; background-color: black; width: 100%; }
-.yourName { color: black; text-align: center; font-size: 300%; background-color: #eba014; border: 1px solid black; width: 100%; }
+.yourName { color: black; text-align: center; font-size: 260%; background-color: #eba014; border: 1px solid black; width: 100%; }
 .yourBet { color: black; text-align: center; width: 100%; font-size: 150%; margin: 5%; }
 
 .pot { text-align: center; font-size: 300%; color: white; position: absolute; right: 45%; }
@@ -322,7 +406,6 @@ body{
   align-items: flex-start;
   justify-content: flex-start;
   display: flex;
-  border: 3px solid black;
   gap: 2%;
 }
 

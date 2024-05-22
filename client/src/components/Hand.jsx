@@ -12,13 +12,13 @@ class Hand extends React.Component {
         };
     }
     render() {
+        console.log(this.props.yourColor);
         return(
             <>
-                <div className={"handArea"+this.props.status}>
-
+                <div className={`handArea${this.props.status} ${this.props.isYourTurn ? "yourTurn": "notYourTurn"}`}>
                     <div className='leftOfCards'>
                         <div className='yourBet'>{`${this.props.action} ${this.props.currentBet}`}</div>
-                        <div className='yourName'>{this.props.yourName}</div>
+                        <div className="yourName" style={{backgroundColor: this.props.yourColor}}>{this.props.yourName}</div>
                         <div className='chipAmount'>{"Chips: " + this.props.chipAmount}</div>
                     </div>
                     <div className='cardArea'>
