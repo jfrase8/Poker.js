@@ -25,7 +25,7 @@ class Lobby
         this.clients = [];
         this.deck = new DeckManager();
         this.locked = false;
-        this.playerNames = ["Big Bob", "Snormoo Beanieborn", "Peabs Droopyeye", "Buzzy Woolham", "Fatcan Oinkbrain", "Binroid Doodoosniffer", "Eggbert", "Wumbus", "Darth Paul"];
+        this.playerNames = ["Big Bob", "Snormoo Beanieborn", "Peabs Droopyeye", "Buzzy Woolham", "Crocky Oinkbrain", "Binroid Sniffer", "Eggbert", "Wumbus", "Darth Paul"];
         this.colors = ["#ff8ba1", "#ffb943", "#00b98f", "#9a70ff", "#fff700", "#0092ff", "#7e571c"];
         this.currentBlinds = [10, 20];
     }
