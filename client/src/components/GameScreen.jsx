@@ -98,7 +98,7 @@ class GameScreen extends React.Component {
                         });
         });
         socket.on('nextTurn', (you, opponents, choice) => {
-            this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice}, () => {
+            this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice, status: you.status}, () => {
                 this.checkYourTurn();
             });
         });
@@ -123,7 +123,7 @@ class GameScreen extends React.Component {
             }
             let newCards = this.state.communityCards.concat(cardsToAdd);
             this.setState({communityCards: newCards, opponents: opponents, currentBet: "", chipAmount: you.chipAmount, 
-                           isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot, numOfBets: 0}, () => {
+                           isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot, numOfBets: 0, status: you.status}, () => {
                 this.checkYourTurn();
             });
         });
@@ -133,7 +133,7 @@ class GameScreen extends React.Component {
             if (handType != null) alert("You won with " + handType);
             else alert("You won because everyone folded");
             this.setState({communityCards: [], currentBet: you.currentBet, chipAmount: you.chipAmount, potAmount: 0, role: you.role, 
-                           actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0}, () => {
+                           actionChose: you.role, isYourTurn: you.isYourTurn, numOfBets: 0, status: you.status}, () => {
                 this.checkYourTurn();
             });
         });
@@ -142,7 +142,7 @@ class GameScreen extends React.Component {
             if (you.actionChose === "fold") shownText = "fold";
             else shownText = you.role;
             this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: shownText, 
-                           isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount}, () => {
+                           isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount, status: you.status}, () => {
                 alert("You lost this hand.");
                 this.checkYourTurn();
             });
@@ -156,6 +156,7 @@ class GameScreen extends React.Component {
         });
         socket.on('wonGame', () => {
             alert("You won!");
+            // Do winning things
         });
     }
     componentWillUnmount() {
@@ -323,7 +324,7 @@ class GameScreen extends React.Component {
                 {this.state.opponents.map((opponent, index) => (
                     <Opponent key={index} name={opponent.nickname} turnNumber={opponent.turnNumber} chipAmount={opponent.chipAmount}
                               cssOrderNum={this.opponentCSSorder(opponent.turnNumber)} isYourTurn={opponent.isYourTurn} 
-                              currentBet={opponent.currentBet} currentAction={opponent.actionChose} status={opponent.lost} color={opponent.color}/>
+                              currentBet={opponent.currentBet} currentAction={opponent.actionChose} status={opponent.status} color={opponent.color}/>
                 ))}
                 <Pot potAmount={this.state.potAmount}/>
                 <ContinueScreen show={this.state.showContinue} message={this.state.continueMessage} onClose={this.toggleContinue}/>

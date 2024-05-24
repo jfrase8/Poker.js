@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import socket from '../socket';
+import React from 'react';
 
 const Opponent = (props) => {
     let chooseColor = "notOpponentsTurn";
     if (props.isYourTurn)
         chooseColor = "opponentsTurn";
+    else if (props.status === "Folded")
+        chooseColor = "opponentFolded";
 
     console.log(`${props.status}`);
     return(
         <>
-            <div className={`opponent opponent${props.cssOrderNum} ${chooseColor} ${props.status}`}>
+            <div className={`opponent opponent${props.cssOrderNum} ${chooseColor} `}>
                 <div className='opponentInfo'>
-                    <div className='yourName' style={{backgroundColor: props.color}}>{props.name}</div>
+                    <div className='yourName' style={{backgroundColor: props.status !== "Folded" ? props.color: "gray"}}>{props.name}</div>
                     <div className='chipAmount'>{"Chips: " + props.chipAmount}</div>
-                    <div className='opponentCardArea'>
+                    <div className='opponentCardArea' style={{opacity: props.status !== "Folded" ? 1.0: 0.25}}>
                         <div className='opponentCard'></div>
                         <div className='opponentCard'></div>
                     </div>

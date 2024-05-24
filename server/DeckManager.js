@@ -82,7 +82,7 @@ class DeckManager {
         for (let hand of this.dealtHands)
         {
             // Make sure this hand hasn't folded
-            if (hand.player.status != "folded")
+            if (hand.player.status != "Folded")
             {
                 let handType = handChecker.checkHandType(hand);
                 console.log(hand.player.nickname, handType);

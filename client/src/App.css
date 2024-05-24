@@ -112,7 +112,7 @@ body{
   display: flex;
 }
 
-.handAreaIn {
+.handAreaIn, .handAreaFolded {
   position: fixed;
   bottom: 1%; /* this is how close you want it to the bottom of the screen */
   left: 50%;
@@ -380,6 +380,7 @@ body{
 
 .opponentsTurn { border: 5px solid lightgreen; }
 .notOpponentsTurn { border: 5px solid red; }
+.opponentFolded { border: 5px solid gray; }
 
 .yourTurn {
   outline: 5px solid lightgreen;
@@ -388,8 +389,8 @@ body{
   outline: 5px solid red;
 }
 
-
-.true {opacity: 0.5;}
+.Lost {opacity: 0.5;}
+.Folded {background-color: #312F2F;}
 
 .chipAmount { color: white; text-align: center; font-size: 150%; background-color: black; width: 100%; }
 .yourName { color: black; text-align: center; font-size: 260%; background-color: #eba014; border: 1px solid black; width: 100%; }

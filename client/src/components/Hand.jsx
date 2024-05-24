@@ -12,16 +12,18 @@ class Hand extends React.Component {
         };
     }
     render() {
-        console.log(this.props.yourColor);
+        let borderColor = "red";
+        if (this.props.status !== "Folded" && this.props.isYourTurn) borderColor = "lightgreen";
+        else if (this.props.status === "Folded") borderColor = "gray";
         return(
             <>
-                <div className={`handArea${this.props.status} ${this.props.isYourTurn ? "yourTurn": "notYourTurn"}`}>
+                <div className={`handArea${this.props.status}`} style={{outline: `5px solid ${borderColor}`}}>
                     <div className='leftOfCards'>
                         <div className='yourBet'>{`${this.props.action} ${this.props.currentBet}`}</div>
-                        <div className="yourName" style={{backgroundColor: this.props.yourColor}}>{this.props.yourName}</div>
+                        <div className="yourName" style={{backgroundColor: this.props.status !== "Folded" ? this.props.yourColor: "gray"}}>{this.props.yourName}</div>
                         <div className='chipAmount'>{"Chips: " + this.props.chipAmount}</div>
                     </div>
-                    <div className='cardArea'>
+                    <div className='cardArea' style={{opacity: this.props.status !== "Folded" ? 1.0: 0.25}}>
                         {this.props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
                     </div>
                     <div className='rightOfCards'>

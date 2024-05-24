@@ -9,10 +9,10 @@ class Client {
         this.isYourTurn = false;
         this.chipAmount = 1000;
         this.currentBet = "";
-        this.status = 'ready';
+        this.status = 'In';
+        this.played = false;
         this.actionChose = "";
         this.role = "";
-        this.lost = false;
         this.infoGrabbed = false;
     }
 }
@@ -100,7 +100,7 @@ class Lobby
                             if (roleswitch == clientsCount)
                                 roleswitch = 0;
 
-                            if (this.clients[roleswitch].lost)
+                            if (this.clients[roleswitch].status === "Lost")
                                 roleswitch++;
                             else {
                                 if (this.clients[roleswitch].role !== "Big Blind")
@@ -155,18 +155,23 @@ class Lobby
             {
                 if (client.role == "Big Blind")
                 {
-                    // Technically client to the left of this client (check for out of bounds)
-                    let boundCheck = client.turnNumber;
-                    if (boundCheck == this.clients.length) boundCheck = 0;
+                    while (true) {
+                        // Technically client to the left of this client (check for out of bounds)
+                        let boundCheck = client.turnNumber;
+                        if (boundCheck == this.clients.length) boundCheck = 0;
 
-                    this.clients[boundCheck].isYourTurn = true;
-                    console.log(this.clients[boundCheck]);
+                        if (this.clients[boundCheck].status !== "In"){
+                            boundCheck++;
+                        }
+                        else {
+                            this.clients[boundCheck].isYourTurn = true;
+                            console.log(this.clients[boundCheck]);
+                            break;
+                        }
+                    }
                 }
             }
-            else {
-                if (client.role == "Small Blind")
-                    client.isYourTurn = true;
-            }
+            else if (client.role == "Small Blind") client.isYourTurn = true;
         }
     }
 }
