@@ -141,7 +141,7 @@ body{
   gap: 3%;
   border: 2px solid black; /* Inner border */
   background-color: rgba(186, 186, 186, 0.5);
-  opacity: 0.5; /* Decrease opacity to 50% */
+  opacity: 0; /* Decrease opacity to 0% */
 }
 .cardArea {
   display: flex;
@@ -389,7 +389,7 @@ body{
   outline: 5px solid red;
 }
 
-.Lost {opacity: 0.5;}
+.Lost {opacity: 0.0;}
 .Folded {background-color: #312F2F;}
 
 .chipAmount { color: white; text-align: center; font-size: 150%; background-color: black; width: 100%; }

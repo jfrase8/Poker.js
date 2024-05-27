@@ -80,13 +80,19 @@ class Lobby
     switchRoles() {
         // Loops 3 times individually so that roles aren't ovewritten, and it shifts big blind, then small blind, then dealer over one.
         // If it is a 2 player game, the roles should switch at the same time.
+        let lostCount = 0;
+        for (let client of this.clients)
+            if (client.status === "Lost");
+                lostCount++;
+        
         let clientsCount = this.clients.length;
+        let clientsInGame = this.clients.length - lostCount;
 
         let roles = {0: "Big Blind", 1: "Small Blind"};
 
         if (clientsCount > 2)
         {
-            for (let r = 0; r < 3; r++)
+            for (let r = 0; r < 2; r++)
             {
                 for (let i = 0; i < clientsCount; i++)
                 {
@@ -105,8 +111,16 @@ class Lobby
                             else {
                                 if (this.clients[roleswitch].role !== "Big Blind")
                                 {
-                                    this.clients[roleswitch].role = this.clients[i].role;
-                                    this.clients[i].role = "";
+                                    if (this.clients[roleswitch].role === "Small Blind" && r == 0)
+                                    {
+                                        let temp = this.clients[i].role;
+                                        this.clients[i].role = this.clients[roleswitch].role;
+                                        this.clients[roleswitch].role = temp;
+                                    }
+                                    else{
+                                        this.clients[roleswitch].role = this.clients[i].role;
+                                        this.clients[i].role = "";
+                                    }
                                 }
                                 break;
                             }
@@ -119,10 +133,19 @@ class Lobby
         }
         // Switch roles for a two player game
         else {
-            let temp = this.clients[0].role;
-            this.clients[0].role = this.clients[1].role;
-            this.clients[1].role = temp;
+            // Find the two clients that are in the game
+            let clients = []
+            for (let client of this.clients)
+                if (client.status !== "Lost")
+                    clients.push(client);
+
+            let temp = clients[0].role;
+            clients[0].role = clients[1].role;
+            clients[1].role = temp;
         }
+        console.log(this.clients[0].nickname, this.clients[0].role);
+        console.log(this.clients[1].nickname, this.clients[1].role);
+        console.log(this.clients[2].nickname, this.clients[2].role);
         // Update actionChose back to their role
         for (let client of this.clients) client.actionChose = client.role;
     }
@@ -130,16 +153,19 @@ class Lobby
     betBlinds() {
         for (let client of this.clients)
         {
-            if (client.role == "Big Blind")
+            if (client.status !== "Lost")
             {
-                client.currentBet = this.currentBlinds[1];
-                client.chipAmount -= client.currentBet;
-            }
-            if (client.role == "Small Blind")
-            {
-                client.currentBet = this.currentBlinds[0];
-                client.chipAmount -= client.currentBet;
-            }     
+                if (client.role == "Big Blind")
+                {
+                    client.currentBet = this.currentBlinds[1];
+                    client.chipAmount -= client.currentBet;
+                }
+                if (client.role == "Small Blind")
+                {
+                    client.currentBet = this.currentBlinds[0];
+                    client.chipAmount -= client.currentBet;
+                }  
+            }   
         }
     }
 
@@ -155,12 +181,12 @@ class Lobby
             {
                 if (client.role == "Big Blind")
                 {
+                    let boundCheck = client.turnNumber;
                     while (true) {
                         // Technically client to the left of this client (check for out of bounds)
-                        let boundCheck = client.turnNumber;
                         if (boundCheck == this.clients.length) boundCheck = 0;
 
-                        if (this.clients[boundCheck].status !== "In"){
+                        if (this.clients[boundCheck].status === "Lost"){
                             boundCheck++;
                         }
                         else {

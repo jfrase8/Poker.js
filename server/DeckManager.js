@@ -32,8 +32,10 @@ class DeckManager {
     {
         let shuffledDeck = this.shuffleDeck(this.cards);
         for (let player of players) {
-            let hand = [shuffledDeck.pop(), shuffledDeck.pop()];
-            this.dealtHands.push(new Hand(player, hand));
+            if (player.status !== "Lost"){
+                let hand = [shuffledDeck.pop(), shuffledDeck.pop()];
+                this.dealtHands.push(new Hand(player, hand));
+            }
         }
     }
     dealFlop() {

@@ -298,7 +298,10 @@ io.on("connection", (socket) => {
             for (let client of lobby.clients)
             {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
+
+                if (client.status !== "Lost") {
+                    io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
+                }
                 io.to(client.id).emit('updateOpponents', opponents);
             }
                 
@@ -370,7 +373,7 @@ io.on("connection", (socket) => {
             let count = 0;
             for (let client of lobby.clients)
             {
-                if (client.played || client.status == 'Folded')
+                if (client.played || client.status !== "In")
                 {
                     count++;
                     console.log(client.nickname, "finished playing their turn");
@@ -394,6 +397,9 @@ io.on("connection", (socket) => {
                         
                         for (let client of lobby.clients)
                         {
+                            // Reset status
+                            client.played = false;
+
                             // This client won the hand
                             if (client.id == winners[0][0].id)
                             {
@@ -402,8 +408,6 @@ io.on("connection", (socket) => {
                                 console.log(client.chipAmount);
                                 client.currentBet = "";
 
-                                // Reset status
-                                client.played = false;
                                 winnerIDs.push(winners[0][0].id);
                             }
                         }
@@ -420,9 +424,9 @@ io.on("connection", (socket) => {
                         {
                             if (winner[0].currentBet == "") winner[0].currentBet = 0;
                             winner[0].chipAmount += splitAmount + parseInt(winner[0].currentBet);
-                            client.currentBet = "";
+                            winner[0].currentBet = "";
 
-                            io.to(client.id).emit('wonHand', client, winner[1][0]);
+                            io.to(winner[0].id).emit('wonHand', client, winner[1][0]);
 
                             // Reset status
                             client.played = false;
@@ -433,7 +437,7 @@ io.on("connection", (socket) => {
 
                     // Check if players have no more chips
                     for (let client of lobby.clients){
-                        if (client.chipAmount <= 0){
+                        if (client.chipAmount <= 0 && client.status !== "Lost"){
                             // Send message to client that they lost, then they enter spectate mode
                             client.status = "Lost";
                             io.to(client.id).emit('lostGame');
@@ -446,10 +450,12 @@ io.on("connection", (socket) => {
                             lostCount++;
                         }
                     }
-                    if (lostCount == lobby.clients.count - 1)
+                    if (lostCount == lobby.clients.length - 1)
                     {
+                        console.log("Happened 1");
                         // Find the person who won
                         for (let client of lobby.clients){
+                            console.log("Client number:", client.turnNumber);
                             if (client.status !== "Lost"){
                                 console.log(client.nickname, "won!");
                                 io.to(client.id).emit('wonGame');
@@ -482,12 +488,13 @@ io.on("connection", (socket) => {
                     roundOver = true;
                     lobby.deck.resetDeck();
 
-                    // Redeal new hands and update opponents on players screens
+                    // Redeal new hands and update opponents on players screen
                     lobby.deck.dealHands(lobby.clients);
                     for (let client of lobby.clients)
                     {
                         let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-                        io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
+                        if (client.status !== "Lost")
+                            io.to(client.id).emit('updateHand', lobby.deck.getPlayerHand(client).cards);
                         io.to(client.id).emit('updateOpponents', opponents);
                     }
                 }
@@ -545,14 +552,28 @@ io.on("connection", (socket) => {
                     }
                     for (let client of lobby.clients)
                     {
-                        // Get this players new cards
-                        playerHand = lobby.deck.getPlayerHand(client).cards;
+                        if (client.status !== "Lost")
+                        {
+                            // Get this players new cards
+                            playerHand = lobby.deck.getPlayerHand(client).cards;
     
-                        // Get opponents
-                        let opponents = lobby.clients.filter(_client => _client.id !== client.id);
-    
-                        // Send new round info to clients
-                        io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
+                            // Get opponents
+                            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+        
+                            // Send new round info to clients
+                            io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
+                        }
+                        else {
+                            // Get opponents
+                            let opponents = lobby.clients.filter(_client => _client.id !== client.id);
+        
+                            let opponentHand = lobby.deck.getPlayerHand(opponents[0]).cards;
+                            console.log(opponentHand);
+
+
+                            // Send new round info to clients
+                            io.to(client.id).emit('nextRoundSpectate', client, opponents, opponentHand, lobby.deck.pot);
+                        }
                     }
                 }
             }

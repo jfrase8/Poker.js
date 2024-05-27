@@ -98,7 +98,9 @@ class GameScreen extends React.Component {
                         });
         });
         socket.on('nextTurn', (you, opponents, choice) => {
+            console.log("Before:", you.isYourTurn);
             this.setState({isYourTurn: you.isYourTurn, chipAmount: you.chipAmount, currentBet: you.currentBet, opponents: opponents, actionChose: choice, status: you.status}, () => {
+                console.log("After:",this.state.isYourTurn);
                 this.checkYourTurn();
             });
         });
@@ -143,7 +145,7 @@ class GameScreen extends React.Component {
             else shownText = you.role;
             this.setState({communityCards: [], currentBet: you.currentBet, potAmount: 0, role: you.role, actionChose: shownText, 
                            isYourTurn: you.isYourTurn, numOfBets: 0, chipAmount: you.chipAmount, status: you.status}, () => {
-                alert("You lost this hand.");
+                if (you.status !== "Lost") alert("You lost this hand.");
                 this.checkYourTurn();
             });
         });
@@ -155,8 +157,30 @@ class GameScreen extends React.Component {
             alert("You lost. You can now spectate.");
         });
         socket.on('wonGame', () => {
-            alert("You won!");
+            setTimeout(() => {
+                alert("You Won!");
+            }, 100); // 100 milliseconds delay
             // Do winning things
+        });
+        socket.on('nextRoundSpectate', (you, opponents, opponentHand, pot) => {
+            let cardsToAdd = [];
+            // Add cards to the community cards state
+            if (opponentHand.length < 6)
+            {
+                cardsToAdd = [opponentHand[2], opponentHand[3], opponentHand[4]];
+            }
+            else if (opponentHand.length < 7)
+            {
+                cardsToAdd.push(opponentHand[5]);
+            }
+            else {
+                cardsToAdd.push(opponentHand[6]);
+            }
+            let newCards = this.state.communityCards.concat(cardsToAdd);
+            this.setState({communityCards: newCards, opponents: opponents, currentBet: "", chipAmount: you.chipAmount, 
+                           isYourTurn: you.isYourTurn, actionChose: '', potAmount: pot, numOfBets: 0, status: you.status}, () => {
+                this.checkYourTurn();
+            });
         });
     }
     componentWillUnmount() {
@@ -170,6 +194,7 @@ class GameScreen extends React.Component {
         socket.off('winner');
         socket.off('lostGame');
         socket.off('wonGame');
+        socket.off('nextRoundSpectate');
     }
 
     checkYourTurn() {

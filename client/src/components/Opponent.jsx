@@ -6,6 +6,8 @@ const Opponent = (props) => {
         chooseColor = "opponentsTurn";
     else if (props.status === "Folded")
         chooseColor = "opponentFolded";
+    else if (props.status === "Lost")
+        chooseColor = "Lost";
 
     console.log(`${props.status}`);
     return(
