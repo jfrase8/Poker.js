@@ -69,6 +69,7 @@ class DeckManager {
             }
                 
         }
+        return this.dealtHands[0];
     }
     resetDeck() {
         this.cards = [...this.deckDefault];

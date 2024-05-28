@@ -78,76 +78,86 @@ class Lobby
     }
 
     switchRoles() {
-        // Loops 3 times individually so that roles aren't ovewritten, and it shifts big blind, then small blind, then dealer over one.
-        // If it is a 2 player game, the roles should switch at the same time.
-        let lostCount = 0;
-        for (let client of this.clients)
-            if (client.status === "Lost");
-                lostCount++;
-        
-        let clientsCount = this.clients.length;
-        let clientsInGame = this.clients.length - lostCount;
 
-        let roles = {0: "Big Blind", 1: "Small Blind"};
+        let playersIn = {};
+        let playersOut = {};
 
-        if (clientsCount > 2)
-        {
-            for (let r = 0; r < 2; r++)
-            {
-                for (let i = 0; i < clientsCount; i++)
-                {
-                    if (this.clients[i].role == roles[r])
-                    {
-                        let roleswitch = i + 1;
-                        // Check if this client is still in the game
-                        while (true)
-                        {
-                            // Make sure not to go out of bounds
-                            if (roleswitch == clientsCount)
-                                roleswitch = 0;
+        let bigBlindOut = false;
 
-                            if (this.clients[roleswitch].status === "Lost")
-                                roleswitch++;
-                            else {
-                                if (this.clients[roleswitch].role !== "Big Blind")
-                                {
-                                    if (this.clients[roleswitch].role === "Small Blind" && r == 0)
-                                    {
-                                        let temp = this.clients[i].role;
-                                        this.clients[i].role = this.clients[roleswitch].role;
-                                        this.clients[roleswitch].role = temp;
-                                    }
-                                    else{
-                                        this.clients[roleswitch].role = this.clients[i].role;
-                                        this.clients[i].role = "";
-                                    }
-                                }
-                                break;
-                            }
+        let hasNewRole = "";
+
+        // Find players who are in and players who are knocked out and what roles they have
+        for (let client of this.clients) {
+            if (client.status !== "Lost"){
+                playersIn[client.turnNumber] = client.role;
+            }
+            else {
+                playersOut[client.turnNumber] = client.role;
+            }
+        }
+        // Check if the big blind was knocked out
+        for (let key in playersOut) {
+            if (playersOut[key] === "Big Blind") {
+                bigBlindOut = true;
+            }
+        }
+
+        // Situation 1 - Big Blind gets knocked out
+        if (bigBlindOut) {
+            for (let key in playersOut) {
+                if (playersOut[key] == "Big Blind"){
+                    // Find next available player to the left
+                    let nextPlayerIndex = parseInt(key); // Next player is gonna be the same as current players turn number (turn number - 1 = clients array index)
+                    while (true) {
+                        if (nextPlayerIndex == this.clients.length) nextPlayerIndex = 0; // Bounds check
+                        else if (this.clients[nextPlayerIndex].status === "Lost") nextPlayerIndex++;
+                        else {
+                            this.clients[nextPlayerIndex].role = "Big Blind";
+                            hasNewRole += this.clients[nextPlayerIndex].nickname;
+                            break;
                         }
-                        // Break so role doesn't get switched multiple times
-                        break;
                     }
+                    break;
                 }
             }
         }
-        // Switch roles for a two player game
+        // Situation 2 - Rotate Normally
         else {
-            // Find the two clients that are in the game
-            let clients = []
-            for (let client of this.clients)
-                if (client.status !== "Lost")
-                    clients.push(client);
+            for (let key in playersIn) {
+                if (playersIn[key] == "Big Blind") {
+                    let nextPlayerIndex = parseInt(key);
 
-            let temp = clients[0].role;
-            clients[0].role = clients[1].role;
-            clients[1].role = temp;
+                    // Current Big blind becomes small blind
+                    this.clients[nextPlayerIndex-1].role = "Small Blind";
+                    hasNewRole += this.clients[nextPlayerIndex-1].nickname;
+
+                    // Shift big blind to next available player
+                    while (true) {
+                        if (nextPlayerIndex == this.clients.length) nextPlayerIndex = 0; // Bounds check
+                        else if (this.clients[nextPlayerIndex].status === "Lost") nextPlayerIndex++;
+                        else {
+                            this.clients[nextPlayerIndex].role = "Big Blind";
+                            hasNewRole += this.clients[nextPlayerIndex].nickname;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
         }
+
+        // Change all other players current roles to nothing
+        for (let client of this.clients) {
+            if (!hasNewRole.includes(client.nickname)) client.role = "";
+        }
+
+        // Make sure their role is displayed
+        for (let client of this.clients) client.actionChose = client.role;
+
+        // Testing
         console.log(this.clients[0].nickname, this.clients[0].role);
         console.log(this.clients[1].nickname, this.clients[1].role);
         console.log(this.clients[2].nickname, this.clients[2].role);
-        // Update actionChose back to their role
-        for (let client of this.clients) client.actionChose = client.role;
     }
 
     betBlinds() {
