@@ -162,14 +162,51 @@ body{
   height: 90%;
 }
 
-/* this deals with card image size */
 .card {
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
   height: 25vh;
   flex-grow: 1;
+  background-image: url("../public/Cards/deck_back.jpeg");
+  opacity: 0;
 }
+@keyframes reveal {
+  0%{ opacity: 0;}
+  100%{ opacity: 1;}
+}
+
+.opponentCardBack {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100%;
+  background-image: url("../public/Cards/deck_back.jpeg");
+  margin: 2%;
+  flex-grow: 1;
+}
+.opponentCardFront {
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100%;
+  margin: 2%;
+  flex-grow: 1;
+  opacity: 0;
+}
+.communityCards {
+  position: fixed;
+  top: 7%;
+  left: 40%;
+  height: 26vh;
+  width: 30%;
+  align-items: flex-start;
+  justify-content: flex-start;
+  display: flex;
+  gap: 2%;
+}
+
+
 
 .rightOfCards {
   display: flex;
@@ -345,15 +382,7 @@ body{
   height: 100%; /* Ensure the height takes full space */
   opacity: 1;
 }
-.opponentCard {
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  height: 100%;
-  background-image: url("../public/Cards/deck_back.jpeg");
-  margin: 2%;
-  flex-grow: 1;
-}
+
 .betArea {
   position: absolute;
   display: flex;
@@ -398,21 +427,43 @@ body{
 
 .pot { text-align: center; font-size: 300%; color: white; position: absolute; right: 45%; }
 
-.communityCards {
-  position: fixed;
-  top: 7%;
-  left: 40%;
-  height: 26vh;
-  width: 30%;
-  align-items: flex-start;
-  justify-content: flex-start;
-  display: flex;
-  gap: 2%;
-}
-
 .slider {
   width: 200px;
   position: fixed;
   top: 50%;
   left: 50%;
+}
+
+.continueScreen {
+  position: absolute;
+  transform: translate(-50%, -25%);
+  display: flex;
+  flex-flow: column;
+  width: 50%;
+  height: 65%;
+  background-color: #735966;
+  border: 4px solid black;
+  align-items: center;
+  justify-content: center;
+}
+.continueScreenText {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  text-align: center;
+  color: #000000;
+  font-size: 400%;
+}
+.continueButton {
+  border-radius: 15px;
+  flex-grow: .8;
+  font-size: 300%;
+  width: 40%;
+  margin: 10%;
+  cursor: pointer;
+}
+.continueButton:hover {
+  background-color: #E76D83;
 }

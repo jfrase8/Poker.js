@@ -14,6 +14,9 @@ class Client {
         this.actionChose = "";
         this.role = "";
         this.infoGrabbed = false;
+        this.allIn = false;
+        this.allInAmount = 1000;
+        this.initialCards = [];
     }
 }
 
@@ -157,7 +160,6 @@ class Lobby
         // Testing
         console.log(this.clients[0].nickname, this.clients[0].role);
         console.log(this.clients[1].nickname, this.clients[1].role);
-        console.log(this.clients[2].nickname, this.clients[2].role);
     }
 
     betBlinds() {

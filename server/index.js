@@ -5,6 +5,9 @@ const app      = express();
 const server   = require('http').createServer(app);
 const io       = require('socket.io')(server, { path: `/poker.js/server/socket.io` });
 
+var readyCount = 0;
+var ready = true;
+
 function emitToLobby(lobby, event, getOpponents, ...args) {
     for (const client of lobby.clients)
     {
@@ -19,8 +22,26 @@ function emitToLobby(lobby, event, getOpponents, ...args) {
     }
 }
 
+function updateCommunityCards(lobby) {
+    for (let client of lobby.clients){
+        let playerCards = lobby.deck.getPlayerHand(client).cards;
+        io.to(client.id).emit('updateCommunity', playerCards);
+    }
+}
+
 io.on("connection", (socket) => {
     console.log("client in");
+
+    socket.on("updateReady", (lobbyName) => {
+        readyCount++;
+        let lobby = lobbyManager.getLobby(lobbyName);
+        if (readyCount == lobby.clients.length)
+        {
+            ready = true;
+            readyCount = 0;
+        }
+    });
+
     socket.on("createLobby", (lobbyName) => {
 
         if (lobbyManager.createLobby(lobbyName, socket.id))
@@ -136,6 +157,11 @@ io.on("connection", (socket) => {
         // Deal Hands
         lobby.deck.dealHands(lobby.clients);
 
+        // Set players initial cards
+        for (let client of lobby.clients) {
+            client.initialCards = [...lobby.deck.getPlayerHand(client).cards];
+        }
+
         // Turn order
         let turnNumber = 1;
 
@@ -243,6 +269,12 @@ io.on("connection", (socket) => {
         {
             lobby.switchRoles();
             lobby.setTurns();
+
+            // Set all in amounts for everyone except player who didnt fold
+            for (let client of lobby.clients) {
+                if (client.status !== "In") client.allInAmount = client.chipAmount;
+            }
+
             for (let client of lobby.clients)
             {
                 // This client won the hand
@@ -253,6 +285,8 @@ io.on("connection", (socket) => {
                     client.chipAmount += parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
                     client.currentBet = "";
                     
+
+
                     // Reset blinds
                     lobby.betBlinds();
 
@@ -260,6 +294,8 @@ io.on("connection", (socket) => {
 
                     // Reset status
                     if (client.status !== "Lost") client.status = 'In';
+
+                    break;
                 }
             }
             for (let client of lobby.clients)
@@ -277,12 +313,15 @@ io.on("connection", (socket) => {
                     io.to(client.id).emit('roundOver', client);
                 }
             }
-
-            roundOver = true;
             lobby.deck.resetDeck();
 
             // Redeal new hands and update opponents on players screens
             lobby.deck.dealHands(lobby.clients);
+            // Set players initial cards
+            for (let client of lobby.clients) {
+                client.initialCards = [...lobby.deck.getPlayerHand(client).cards];
+            }
+
             for (let client of lobby.clients)
             {
                 let opponents = lobby.clients.filter(_client => _client.id !== client.id);
@@ -294,13 +333,13 @@ io.on("connection", (socket) => {
             }
                 
         }
-
-        // Make sure round is not over because of everyone folding
-        if (!roundOver)
+        else
         {
             if (choice == 'bet') {
                 player.currentBet = betAmount;
                 player.chipAmount -= player.currentBet;
+
+                if (player.chipAmount == 0) player.allIn = true;
 
                 // If player bets, all other players now get another turn, unless they folded or are out of the game
                 for (let client of lobby.clients)
@@ -323,6 +362,8 @@ io.on("connection", (socket) => {
                 let addedBet = betAmount - player.currentBet;
                 player.currentBet = betAmount;
                 player.chipAmount -= addedBet;
+
+                if (player.chipAmount == 0) player.allIn = true;
             }
     
             if (choice == 'call')
@@ -344,6 +385,7 @@ io.on("connection", (socket) => {
                     // This player goes all in
                     player.currentBet = player.chipAmount+player.currentBet;
                     player.chipAmount = 0;
+                    player.allIn = true;
                 }
                 else {
                     addedBet = highestcurrentBet - player.currentBet;
@@ -351,20 +393,33 @@ io.on("connection", (socket) => {
         
                     // Subtract the added on bet from their chip amount
                     player.chipAmount -= addedBet;
+
+                    if (player.chipAmount == 0) player.allIn = true;
                 }
             }
-    
-            // See how many players are ready for next round
+
+
+            // See how many players are ready for next round. Also check for people who are all in
             let count = 0;
+            let allInCount = 0;
+            let outCount = 0;
             for (let client of lobby.clients)
             {
-                if (client.played || client.status !== "In")
+                if (client.played) 
                 {
                     count++;
                 }
-                    
+                else if (client.status !== "In")
+                {
+                    count++;
+                    outCount++;
+                }
+                if (client.allIn) allInCount++;
             }
     
+            console.log("Out Count:", outCount + allInCount);
+            console.log("Ready Count:", count);
+
             // Check if this is last turn of the round
             if (count == lobby.clients.length) 
             {
@@ -374,6 +429,9 @@ io.on("connection", (socket) => {
                     let winners = lobby.deck.findWinner(lobbyName, lobbyManager);
 
                     let winnerIDs = [];
+
+                    let singleWinnerPotWon = 0;
+                    let splitPotWon = 0;
 
                     if (winners.length == 1)
                     {
@@ -388,7 +446,8 @@ io.on("connection", (socket) => {
                             if (client.id == winners[0][0].id)
                             {
                                 if (client.currentBet == "") client.currentBet = 0;
-                                client.chipAmount += parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
+                                singleWinnerPotWon = parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
+                                client.chipAmount += singleWinnerPotWon;
                                 client.currentBet = "";
 
                                 winnerIDs.push(winners[0][0].id);
@@ -406,10 +465,11 @@ io.on("connection", (socket) => {
                         for (let winner of winners)
                         {
                             if (winner[0].currentBet == "") winner[0].currentBet = 0;
-                            winner[0].chipAmount += splitAmount + parseInt(winner[0].currentBet);
+                            splitPotWon = splitAmount + parseInt(winner[0].currentBet);
+                            winner[0].chipAmount += splitPotWon;
                             winner[0].currentBet = "";
 
-                            io.to(winner[0].id).emit('wonHand', winner[0], winner[1][0]);
+                            io.to(winner[0].id).emit('wonHand', winner[0], winner[1][0], splitPotWon, winners);
 
                             // Reset status
                             client.played = false;
@@ -418,21 +478,21 @@ io.on("connection", (socket) => {
                         }
                     }
 
+                    let lostCount = 0;
+
                     // Check if players have no more chips
                     for (let client of lobby.clients){
                         if (client.chipAmount <= 0 && client.status !== "Lost"){
                             // Send message to client that they lost, then they enter spectate mode
                             client.status = "Lost";
+                            lostCount++;
                             io.to(client.id).emit('lostGame');
                         }
+
+                        // Set clients all in amount to their new amount of chips
+                        client.allInAmount = client.chipAmount;
                     }
-                    // Check how many players have lost
-                    let lostCount = 0;
-                    for (let client of lobby.clients){
-                        if (client.status === "Lost"){
-                            lostCount++;
-                        }
-                    }
+
                     if (lostCount == lobby.clients.length - 1)
                     {
                         // Find the person who won
@@ -459,10 +519,11 @@ io.on("connection", (socket) => {
                             // Make sure someone who doesn't have a blind has nothing as their current bet
                             if ((client.role == "") && client.currentBet != "") client.currentBet = "";
 
-                            io.to(client.id).emit('roundOver', client);
+                            if (winners.length > 1) io.to(client.id).emit('roundOver', client, winners, "", splitPotWon);
+                            else io.to(client.id).emit('roundOver', client, winners, winners[0][1][0], singleWinnerPotWon);
                         }
                         else {
-                            io.to(client.id).emit('wonHand', client, winners[0][1][0]);
+                            io.to(client.id).emit('wonHand', client, winners[0][1][0], singleWinnerPotWon, winners);
                         }
                     }
 
@@ -479,7 +540,52 @@ io.on("connection", (socket) => {
                         io.to(client.id).emit('updateOpponents', opponents);
                     }
                 }
-                else 
+                // Enough people are all in to start automatically going through the rest of the phases
+                else if (outCount + allInCount >= lobby.clients.length - 1)
+                {
+                    console.log('Auto phases');
+
+                    // Reveal opponents cards
+                    emitToLobby(lobby, 'revealCards', false);
+
+                    // Start showing cards in phases
+                    setTimeout(() => {
+                        if (handSize == 2){
+                            lobby.deck.dealFlop();
+                            updateCommunityCards(lobby);
+                            setTimeout(() => {
+                                lobby.deck.dealTurnRiver();
+                                updateCommunityCards(lobby);
+                                setTimeout(() => {
+                                    lobby.deck.dealTurnRiver();
+                                    updateCommunityCards(lobby);
+                                }, 2000);
+                            }, 2000);
+                        }
+                        else if (handSize == 5) {
+                            setTimeout(() => {
+                                lobby.deck.dealTurnRiver();
+                                updateCommunityCards(lobby);
+                                setTimeout(() => {
+                                    lobby.deck.dealTurnRiver();
+                                    updateCommunityCards(lobby);
+                                }, 2000);
+                            }, 2000);
+                        }
+                        else {
+                            setTimeout(() => {
+                                lobby.deck.dealTurnRiver();
+                                updateCommunityCards(lobby);
+                            }, 2000);
+                        }
+                    }, 2000);
+
+                    // Figure out winner
+
+                    // Move onto next round
+
+                }
+                else
                 {
                     player.isYourTurn = false;
 
@@ -494,7 +600,7 @@ io.on("connection", (socket) => {
 
                     for (let client of lobby.clients)
                     {
-                        if (client.role == smallBlind && client.status != "Folded")
+                        if (client.role == smallBlind && client.status != "Folded" && !client.allIn)
                         {
                             client.isYourTurn = true;
                         }
@@ -503,7 +609,7 @@ io.on("connection", (socket) => {
                                 let boundCheck = client.turnNumber;
                                 if (boundCheck == lobby.clients.length) boundCheck = 0;
         
-                                if (lobby.clients[boundCheck].status !== "In"){
+                                if (lobby.clients[boundCheck].status !== "In" || lobby.clients[boundCheck].allIn){
                                     boundCheck++;
                                 }
                                 else {
@@ -528,6 +634,7 @@ io.on("connection", (socket) => {
                         // Put their chips in the main pot
                         if (lobby.deck.pot == "") lobby.deck.pot = 0; // Make sure to switch pot to an int if this is the first time chips are going in
                         if (client.currentBet == "") client.currentBet = 0; // Make sure to change clients current bet to 0 if it is a blank string
+                        
                         lobby.deck.pot += parseInt(client.currentBet);
                         client.currentBet = "";
 
@@ -549,7 +656,8 @@ io.on("connection", (socket) => {
                             let opponents = lobby.clients.filter(_client => _client.id !== client.id);
         
                             // Send new round info to clients
-                            io.to(client.id).emit('nextRound', playerHand, client, opponents, lobby.deck.pot);
+                            io.to(client.id).emit('updateCommunity', playerHand);
+                            io.to(client.id).emit('nextRound', client, opponents, lobby.deck.pot);
                         }
                         else {
                             // Get opponents

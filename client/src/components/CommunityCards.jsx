@@ -7,7 +7,7 @@ const CommunityCards = (props) => {
     return(
         <>
             <div className="communityCards">
-                {props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} background={card.imageURL}/>))}
+                {props.cards.map((card, index) => (<Card key={index} suit={card.suit} value={card.value} />))}
             </div>
         </>
     );
