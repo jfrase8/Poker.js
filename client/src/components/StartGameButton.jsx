@@ -4,7 +4,6 @@ import socket from "../socket";
 const StartGameButton = (props) => {
 
     const startGame = () => {
-        console.log(props.name);
         socket.emit('startGame', (props.name));
     }
 

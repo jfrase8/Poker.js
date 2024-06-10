@@ -3,7 +3,6 @@ import Card from './Card';
 import socket from '../socket';
 
 const CommunityCards = (props) => {
-    console.log(props.cards);
     return(
         <>
             <div className="communityCards">
