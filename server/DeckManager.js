@@ -76,8 +76,15 @@ class DeckManager {
         this.dealtHands = [];
         this.pot = 0;
     }
-    findWinner(lobbyName, lobbyManager) {
-        let lobby = lobbyManager.getLobby(lobbyName);
+    findWinner(lobby, reason) {
+        
+        if (reason === 'folding') {
+            for (const client of this.clients) {
+                if (client.status === 'In') {
+                    return [client];
+                }
+            }
+        }
 
         let handChecker = new HandChecker();
 

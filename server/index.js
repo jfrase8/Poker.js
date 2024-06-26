@@ -226,149 +226,9 @@ io.on("connection", (socket) => {
 
         console.log(player.nickname + " " + choice + "ed");
 
-        player.makeAction(choice);
+        player.makeAction(lobby, player, choice, betAmount);
 
-        // Check if everyone has folded or is out of game except 1 (also get a number for total chips currrently bet by those that folded)
-        let foldCount = 0;
-        let totalCurrentBet = 0;
-        for (let client of lobby.clients)
-        {
-            if (client.status == "Folded" || client.status == "Lost")
-            {
-                foldCount++;
-                if (client.currentBet != "")
-                    totalCurrentBet += client.currentBet;
-            }
-        }
-        // Round is over, all but one player folded
-        if (foldCount == lobby.clients.length-1)
-        {
-            lobby.switchRoles();
-            lobby.setTurns();
-
-            // Set all in amounts for everyone except player who didnt fold
-            for (let client of lobby.clients) {
-                if (client.status !== "In") client.allInAmount = client.chipAmount;
-            }
-
-
-            let potWon = parseInt(lobby.deck.pot) + parseInt(totalCurrentBet);
-            let winner = '';
-
-            for (let client of lobby.clients)
-            {
-                // This client won the hand
-                if (client.status === "In")
-                {
-                    winner = [client];
-
-                    console.log(client.nickname, "won this hand");
-                    if (client.currentBet == "") client.currentBet = 0;
-                    client.chipAmount += parseInt(client.currentBet) + potWon;
-                    client.currentBet = "";
-                    
-                    
-
-                    // Reset blinds
-                    lobby.betBlinds();
-
-                    io.to(client.id).emit('wonHand', client, 'fold', potWon, winner);
-
-                    // Reset status
-                    if (client.status !== "Lost") client.status = 'In';
-
-                    break;
-                }
-            }
-            for (let client of lobby.clients)
-            {
-                // These clients need to update
-                if (client.status !== "In")
-                {
-                    console.log(client.nickname, "lost this hand");
-                    // Reset status
-                    if (client.status !== "Lost") client.status = 'In';
-                    
-                    // Make sure someone who doesn't have a blind has nothing as their current bet
-                    if ((client.role == "") && client.currentBet != "") client.currentBet = "";
-
-                    io.to(client.id).emit('roundOver', client, winner, 'fold', potWon);
-                }
-            }
-            lobby.deck.resetDeck();
-
-            // Redeal new hands and update opponents on players screens
-            lobby.deck.dealHands(lobby.clients);
-            // Set players initial cards
-            for (let client of lobby.clients) {
-                client.initialCards = [...lobby.deck.getPlayerHand(client).cards];
-            }   
-        }
-        else
-        {
-            if (choice == 'bet') {
-                player.currentBet = betAmount;
-                player.chipAmount -= player.currentBet;
-
-                if (player.chipAmount == 0) player.allIn = true;
-
-                // If player bets, all other players now get another turn, unless they folded or are out of the game
-                for (let client of lobby.clients)
-                {
-                    if (client.id != player.id && client.status === "In")
-                        client.played = false;
-                }
-            }
-    
-            if (choice == 'raise')
-            {
-                // If player raised, all other players now get another turn, unless they folded
-                for (let client of lobby.clients){
-                    if (client.id != player.id && client.status === "In") {
-                        client.played = false;
-                    }
-                }
-
-                // Calculate added on amount and subtract that from players chips
-                let addedBet = betAmount - player.currentBet;
-                player.currentBet = betAmount;
-                player.chipAmount -= addedBet;
-
-                if (player.chipAmount == 0) player.allIn = true;
-            }
-    
-            if (choice == 'call')
-            {
-                // Keep track of the added bet
-                let addedBet = 0;
-    
-                // Find highest currentBet
-                let highestcurrentBet = 0;
-                for (let client of lobby.clients)
-                {
-                    if (client.currentBet > highestcurrentBet)
-                        highestcurrentBet = client.currentBet;
-                        
-                }
-                // Set players currentBet to the highest current bet, if they have that many chips, otherwise, they put in all their chips
-                if (highestcurrentBet > player.chipAmount+player.currentBet)
-                {
-                    // This player goes all in
-                    player.currentBet = player.chipAmount+player.currentBet;
-                    player.chipAmount = 0;
-                    player.allIn = true;
-                }
-                else {
-                    addedBet = highestcurrentBet - player.currentBet;
-                    player.currentBet = highestcurrentBet;
-        
-                    // Subtract the added on bet from their chip amount
-                    player.chipAmount -= addedBet;
-
-                    if (player.chipAmount == 0) player.allIn = true;
-                }
-            }
-
+        if (!lobby.endOfHand) {
 
             // See how many players are ready for next round. Also check for people who are all in
             let count = 0;
@@ -387,19 +247,16 @@ io.on("connection", (socket) => {
                 }
                 if (client.allIn) allInCount++;
             }
-    
-            console.log("Out Count:", outCount + allInCount);
-            console.log("Ready Count:", count);
-
             // Check if this is last turn of the round
             if (count == lobby.clients.length) 
             {
                 // Figure out who wins
                 if (handSize == 7)
                 {
+                    // Reveal cards
                     emitToLobby(lobby, 'revealCards', false);
 
-                    let winners = lobby.deck.findWinner(lobbyName, lobbyManager);
+                    let winners = lobby.deck.findWinner(lobby, 'normal');
 
                     let winnerIDs = [];
 
@@ -412,8 +269,6 @@ io.on("connection", (socket) => {
                         
                         for (let client of lobby.clients)
                         {
-                            // Reset status
-                            client.played = false;
 
                             // This client won the hand
                             if (client.id == winners[0][0].id)
@@ -502,6 +357,12 @@ io.on("connection", (socket) => {
 
                     lobby.deck.resetDeck();
                 }
+            }
+        }
+
+
+            
+                
                 // Enough people are all in to start automatically going through the rest of the phases
                 else if (outCount + allInCount >= lobby.clients.length - 1)
                 {
@@ -553,7 +414,7 @@ io.on("connection", (socket) => {
 
                     setTimeout(() => {
                         // Figure out winner
-                        let winners = lobby.deck.findWinner(lobbyName, lobbyManager);
+                        let winners = lobby.deck.findWinner(lobby, 'normal');
 
                         let winnerIDs = [];
 
