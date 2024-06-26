@@ -256,12 +256,19 @@ io.on("connection", (socket) => {
                     // Reveal cards
                     emitToLobby(lobby, 'revealCards', false);
 
-                    let winners = lobby.deck.findWinner(lobby, 'normal');
+                    lobby.endOfHand = true;
 
+                    // Find the winners
+                    const winners = lobby.deck.findWinner();
                     let winnerIDs = [];
 
-                    let singleWinnerPotWon = 0;
-                    let splitPotWon = 0;
+                    // Find losers
+                    const losers = this.clients.filter(_client => _client.id !== winner[0].id);
+
+                    // Display win and loss messages on the client UI
+                    lobby.informWinLose(winners, losers, payout.amount, 'none');
+
+                    lobby.endHand();
 
                     if (winners.length == 1)
                     {
@@ -269,13 +276,17 @@ io.on("connection", (socket) => {
                         
                         for (let client of lobby.clients)
                         {
-
                             // This client won the hand
                             if (client.id == winners[0][0].id)
                             {
+
+                                // Create the payout
+                                const payout = lobby.potManager.pots[0].createPayout(winner[0]);
+                                
+                                // Pay client
+                                winners[0][0].chipAmount += payout.amount;
+
                                 if (client.currentBet == "") client.currentBet = 0;
-                                singleWinnerPotWon = parseInt(lobby.deck.pot) + parseInt(client.currentBet) + parseInt(totalCurrentBet);
-                                client.chipAmount += singleWinnerPotWon;
                                 client.currentBet = "";
 
                                 winnerIDs.push(winners[0][0].id);
@@ -284,12 +295,6 @@ io.on("connection", (socket) => {
                     }
                     // Split pot
                     else {
-                        let pot = parseInt(lobby.deck.pot) + parseInt(totalCurrentBet);
-                        let extraChips = pot % winners.length;
-                        
-                        lobby.deck.pot -= extraChips;
-                        let splitAmount = pot / winners.length;
-
                         for (let winner of winners)
                         {
                             if (winner[0].currentBet == "") winner[0].currentBet = 0;

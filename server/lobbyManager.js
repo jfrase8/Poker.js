@@ -33,15 +33,29 @@ class Client {
         this.initialCards = [];
     }
     makeAction(lobby, player, choice, betAmount) {
-        player.actionChose = this.actions.check;
         player.played = true;
 
         switch (choice) {
-            case actions.check: this.check(lobby, player); break;
-            case actions.bet: this.bet(lobby, player, betAmount); break;
-            case actions.call: this.call(lobby, player); break;
-            case actions.raise: this.raise(lobby, player, betAmount); break;
-            case actions.fold: this.fold(lobby); break;
+            case actions.check: 
+                this.check(lobby, player);
+                player.actionChose = actions.check; 
+                break;
+            case actions.bet: 
+                this.bet(lobby, player, betAmount); 
+                player.actionChose = actions.bet;
+                break;
+            case actions.call: 
+                this.call(lobby, player); 
+                player.actionChose = actions.check;
+                break;
+            case actions.raise: 
+                this.raise(lobby, player, betAmount); 
+                player.actionChose = actions.raise;
+                break;
+            case actions.fold: 
+                this.fold(lobby);
+                player.actionChose = actions.fold;
+                break;
         }
     }
     check(lobby, player) {

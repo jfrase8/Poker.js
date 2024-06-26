@@ -76,7 +76,7 @@ class DeckManager {
         this.dealtHands = [];
         this.pot = 0;
     }
-    findWinner(lobby, reason) {
+    findWinner(reason) {
         
         if (reason === 'folding') {
             for (const client of this.clients) {

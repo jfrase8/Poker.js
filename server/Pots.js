@@ -1,6 +1,6 @@
 // Manages creations of pots and pot functions
 class PotManager {
-    pots = [];
+    pots = [new Pot()];
 
     // Creates a new pot and adds it to the current list of pots, then returns that pot
     createPot() {
