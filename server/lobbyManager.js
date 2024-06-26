@@ -1,18 +1,4 @@
 const {DeckManager} = require("./DeckManager");
-const {PotManager} = require("./Pots");
-
-const actions = {
-    check: 'check',
-    call: 'call',
-    raise: 'raise',
-    bet: 'bet',
-    fold: 'fold',
-}
-const statuses = {
-    fold: 'Folded',
-    out: 'Lost',
-    in: 'In',
-}
 
 class Client {
     constructor(_id, _nickname, _color){
@@ -32,45 +18,6 @@ class Client {
         this.allInAmount = 1000;
         this.initialCards = [];
     }
-    makeAction(choice, lobby) {
-        switch (choice) {
-            case actions.check: this.check(lobby); break;
-            case actions.bet: this.bet(lobby); break;
-            case actions.call: this.call(lobby); break;
-            case actions.raise: this.raise(lobby); break;
-            case actions.fold: this.fold(lobby); break;
-        }
-    }
-    check(lobby) {
-        player.actionChose = this.actions.check;
-        player.played = true;
-
-    }
-    bet(lobby) {
-        player.actionChose = this.actions.bet;
-        player.played = true;
-    }
-    call(lobby) {
-        player.actionChose = this.actions.call;
-        player.played = true;
-    }
-    raise(lobby) {
-        player.actionChose = this.actions.raise;
-        player.played = true;
-    }
-    fold(lobby) {
-        player.actionChose = this.actions.fold;
-        player.status = this.status.fold;
-
-        // Add this players current bet to the pot
-        lobby.potManager.pots[0].addContribution(this, this.currentBet);
-
-        // Check if everyone except one player has folded
-        const foldCount = lobby.getFoldCount();
-        if (foldCount >= lobby.clients.length-1) {
-
-        }
-    }
 }
 
 class Lobby
@@ -80,7 +27,6 @@ class Lobby
         this.host = host;
         this.clients = [];
         this.deck = new DeckManager();
-        this.potManager = new PotManager();
         this.locked = false;
         this.playerNames = ["Big Bob", "Snormoo Beanieborn", "Peabs Droopyeye", "Buzzy Woolham", "Crocky Oinkbrain", "Binroid Sniffer", "Eggbert", "Wumbus", "Darth Paul"];
         this.colors = ["#ff8ba1", "#ffb943", "#00b98f", "#9a70ff", "#fff700", "#0092ff", "#7e571c"];
@@ -132,14 +78,6 @@ class Lobby
         this.colors.splice(randomIndex, 1);
 
         return randomColor;
-    }
-
-    getFoldCount() {
-        const foldCount = 0;
-        for (const client of this.clients) {
-            if (client.status === statuses.fold || client.status === statuses.out) foldCount++;
-        }
-        return foldCount;
     }
 
     switchRoles() {
