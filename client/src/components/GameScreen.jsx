@@ -152,7 +152,7 @@ class GameScreen extends React.Component {
             // Hold this state until players have pressed continue
             this.setState({showContinue: true, continueMessage: message, stateHold: you});
         });
-        socket.on('lostHand', (you, winners, handType, potWon) => {
+        socket.on('roundOver', (you, winners, handType, potWon) => {
             let message = "";
             if (winners.length > 1) {
                 let winnerNames = "";

@@ -32,80 +32,36 @@ class Client {
         this.allInAmount = 1000;
         this.initialCards = [];
     }
-    makeAction(lobby, player, choice, betAmount) {
-        player.actionChose = this.actions.check;
-        player.played = true;
-
+    makeAction(choice, lobby) {
         switch (choice) {
-            case actions.check: this.check(lobby, player); break;
-            case actions.bet: this.bet(lobby, player, betAmount); break;
-            case actions.call: this.call(lobby, player); break;
-            case actions.raise: this.raise(lobby, player, betAmount); break;
+            case actions.check: this.check(lobby); break;
+            case actions.bet: this.bet(lobby); break;
+            case actions.call: this.call(lobby); break;
+            case actions.raise: this.raise(lobby); break;
             case actions.fold: this.fold(lobby); break;
         }
     }
-    check(lobby, player) {
-        
+    check(lobby) {
+        player.actionChose = this.actions.check;
+        player.played = true;
+
     }
-    bet(lobby, player) {
-        player.currentBet = betAmount;
-        player.chipAmount -= player.currentBet;
-
-        if (player.chipAmount == 0) player.allIn = true;
-
-        // If player bets, all other players now get another turn, unless they folded or are out of the game
-        for (let client of lobby.clients)
-        {
-            if (client.id !== player.id && client.status === "In")
-                client.played = false;
-        }
+    bet(lobby) {
+        player.actionChose = this.actions.bet;
+        player.played = true;
     }
-    call(lobby, player) {
-        // Keep track of the added bet
-        let addedBet = 0;
-    
-        // Find highest currentBet
-        let highestcurrentBet = 0;
-        for (let client of lobby.clients)
-        {
-            if (client.currentBet > highestcurrentBet)
-                highestcurrentBet = client.currentBet;
-                
-        }
-        // Set players currentBet to the highest current bet, if they have that many chips, otherwise, they put in all their chips
-        if (highestcurrentBet > player.chipAmount+player.currentBet)
-        {
-            // This player goes all in
-            player.currentBet = player.chipAmount+player.currentBet;
-            player.chipAmount = 0;
-            player.allIn = true;
-        }
-        else {
-            addedBet = highestcurrentBet - player.currentBet;
-            player.currentBet = highestcurrentBet;
-
-            // Subtract the added on bet from their chip amount
-            player.chipAmount -= addedBet;
-
-            if (player.chipAmount == 0) player.allIn = true;
-        }
+    call(lobby) {
+        player.actionChose = this.actions.call;
+        player.played = true;
     }
-    raise(lobby, player, betAmount) {
-        // If player raised, all other players now get another turn, unless they folded
-        for (let client of lobby.clients){
-            if (client.id != player.id && client.status === "In") {
-                client.played = false;
-            }
-        }
-
-        // Calculate added on amount and subtract that from players chips
-        let addedBet = betAmount - player.currentBet;
-        player.currentBet = betAmount;
-        player.chipAmount -= addedBet;
-
-        if (player.chipAmount == 0) player.allIn = true;
+    raise(lobby) {
+        player.actionChose = this.actions.raise;
+        player.played = true;
     }
     fold(lobby) {
+        player.actionChose = this.actions.fold;
+        player.status = this.status.fold;
+
         // Add this players current bet to the pot
         lobby.potManager.pots[0].addContribution(this, this.currentBet);
 
@@ -113,24 +69,6 @@ class Client {
         const foldCount = lobby.getFoldCount();
         if (foldCount >= lobby.clients.length-1) {
 
-            lobby.endOfHand = true;
-
-            // Find the winner
-            const winner = lobby.deck.findWinner(lobby, 'folding');
-            
-            // Create the payout
-            const payout = lobby.potManager.pots[0].createPayout(winner[0]);
-            
-            // Pay client
-            winner[0].chipAmount += payout.amount;
-            
-            // Find losers
-            const losers = this.clients.filter(_client => _client.id !== winner[0].id);
-
-            // Display win and loss messages on the client UI
-            lobby.informWinLose(winner, losers, payout.amount, 'none');
-
-            lobby.endHand();
         }
     }
 }
@@ -147,7 +85,6 @@ class Lobby
         this.playerNames = ["Big Bob", "Snormoo Beanieborn", "Peabs Droopyeye", "Buzzy Woolham", "Crocky Oinkbrain", "Binroid Sniffer", "Eggbert", "Wumbus", "Darth Paul"];
         this.colors = ["#ff8ba1", "#ffb943", "#00b98f", "#9a70ff", "#fff700", "#0092ff", "#7e571c"];
         this.currentBlinds = [10, 20];
-        this.endofHand = false;
     }
 
     addClient(clientID){
@@ -203,70 +140,6 @@ class Lobby
             if (client.status === statuses.fold || client.status === statuses.out) foldCount++;
         }
         return foldCount;
-    }
-
-    informWinLose(winners, losers, potWon, handType) {
-        for (const client of this.clients) {
-            for (const winner of winners) {
-                if (client.id === winner.id) io.to(client.id).emit('wonHand', client, handType, potWon, winners);
-            }
-            for (const loser of losers) {
-                if (client.id === loser.id) io.to(client.id).emit('lostHand', client, handType, potWon, winners);
-            }
-        }
-    }
-
-    endHand() {
-
-        let lostCount = 0;
-
-        for (const client of this.clients) {
-            // Reset status
-            client.played = false;
-
-            // Put players bet back into their chips
-            if (client.currentBet !== 0) {
-                client.chipAmount += client.currentBet;
-                client.currentBet = 0;
-            }
-
-            // Check if this player lost
-            if (client.chipAmount <= 0 && client.status !== "Lost"){
-                // Send message to client that they lost, then they enter spectate mode
-                client.status = "Lost";
-                lostCount++;
-                io.to(client.id).emit('lostGame');
-            }
-
-            // Set all in amounts for all players
-            if (client.status === "In") client.allInAmount = client.chipAmount;
-        }
-
-        // Check if the game is over
-        if (lostCount === this.clients.length-1) {
-            for (const client of this.clients) {
-                if (client.status === 'In') io.to(client.id).emit('wonGame');
-                return;
-            }
-        }
-
-        this.switchRoles();
-        this.setTurns();
-
-        this.betBlinds();
-        this.deck.resetDeck();
-        this.deck.dealHands(this.clients);
-
-        // Set players initial cards
-        for (let client of this.clients) {
-            client.initialCards = [...this.deck.getPlayerHand(client).cards];
-        }
-
-        // Update players
-        for (const client of this.clients) {
-            const opponents = this.clients.filter(_client => _client.id !== client.id);
-            io.to(client.id).emit('handEnded', client, opponents, pot);
-        }
     }
 
     switchRoles() {
@@ -345,6 +218,10 @@ class Lobby
 
         // Make sure their role is displayed
         for (let client of this.clients) client.actionChose = client.role;
+
+        // Testing
+        console.log(this.clients[0].nickname, this.clients[0].role);
+        console.log(this.clients[1].nickname, this.clients[1].role);
     }
 
     betBlinds() {

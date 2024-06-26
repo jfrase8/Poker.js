@@ -58,11 +58,6 @@ class Pot {
         }
         return payouts;
     }
-
-    createPayout(winner) {
-        const rewardAmount = this.potSize;
-        return new Payout(winner, rewardAmount);
-    }
 }
 
 // Contribution made by a player to a pot
