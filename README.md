@@ -4,7 +4,6 @@ as the project is made using Javascript and its creators are Joel and Steve.
 
 
 It is an online texas holdem poker game that you can play from different devices. Enjoy!
-You can play the game from this url: https://axiomdev.net/poker.js
 
 # Getting Started with Create React App
 
